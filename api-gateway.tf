@@ -1,8 +1,26 @@
+resource "aws_acm_certificate" "api_cert" {
+  domain_name       = "api.${var.main_domain_name}"
+  validation_method = "DNS"
+
+  tags = {
+    Name        = "ACM-Certificate-API-${var.main_domain_name}"
+    Environment = var.env
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_acm_certificate_validation" "api_certificate_validation" {
+  certificate_arn = aws_acm_certificate.api_cert.arn
+}
+
 resource "aws_apigatewayv2_api" "lambda_api" {
   name          = "LambdaAPI"
   protocol_type = "HTTP"
   cors_configuration {
-    allow_origins = ["https://${var.domain_name}", "https://www.${var.domain_name}"]
+    allow_origins = ["https://${var.main_domain_name}", "https://www.${var.main_domain_name}", "https://${var.admin_domain_name}"]
     allow_methods = ["POST", "GET", "OPTIONS"]
     allow_headers = ["content-type"]
     max_age       = 300
@@ -37,7 +55,7 @@ resource "aws_apigatewayv2_route" "post_route" {
 }
 
 resource "aws_apigatewayv2_domain_name" "web_service_api_domain_name" {
-  domain_name = "api.${var.domain_name}"
+  domain_name = "api.${var.main_domain_name}"
   domain_name_configuration {
     certificate_arn = aws_acm_certificate.api_cert.arn
     endpoint_type   = "REGIONAL"

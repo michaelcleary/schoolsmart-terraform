@@ -1,14 +1,17 @@
 resource "aws_cloudfront_origin_access_identity" "origin_identity" {
-  comment = "Origin Access Identity for CloudFront to access S3"
+  comment = "Origin Access Identity for CloudFront to access S3 for ${var.domain_name}"
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
-  enabled             = var.enable_cloudfront
+  count = var.enable_cloudfront ? 1 : 0
+  
+  enabled             = true
   default_root_object = "index.html"
 
   origin {
     domain_name = aws_s3_bucket.static_website.bucket_regional_domain_name
     origin_id   = aws_s3_bucket.static_website.id
+    origin_path = var.origin_path
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.origin_identity.cloudfront_access_identity_path
@@ -16,8 +19,8 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   default_cache_behavior {
-    allowed_methods = ["GET", "HEAD"]
-    cached_methods = ["GET", "HEAD"]
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
     target_origin_id = aws_s3_bucket.static_website.id
 
     viewer_protocol_policy = "redirect-to-https"
@@ -41,9 +44,19 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
   }
 
-  aliases = [var.domain_name, "www.${var.domain_name}"]
+  # Dynamic aliases based on configuration
+  aliases = concat(
+    [var.domain_name],
+    var.use_www_subdomain ? ["www.${var.domain_name}"] : []
+  )
 
   tags = {
-    Name = "CloudFrontDistribution"
+    Name        = "CloudFrontDistribution-${var.domain_name}"
+    Environment = var.env
   }
+
+  depends_on = [
+    aws_acm_certificate_validation.cert_validation,
+    aws_acm_certificate.cert
+  ]
 }
