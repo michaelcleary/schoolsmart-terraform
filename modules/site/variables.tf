@@ -65,3 +65,15 @@ variable "api_gateway_domain_name" {
   type        = string
   default     = ""
 }
+
+variable "enable_api_gateway" {
+  description = "Is API gateway enabled"
+  type        = bool
+  default     = false
+}
+
+variable "api_invoke_url" {
+  description = "URL for Gateway"
+  type        = string
+  default     = ""
+}

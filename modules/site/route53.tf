@@ -37,10 +37,10 @@ resource "aws_route53_record" "www" {
 }
 
 # CNAME record for the API subdomain (if enabled)
-resource "aws_route53_record" "api_cert_validation" {
+resource "aws_route53_record" "api_gateway_record" {
   count   = var.enable_route53 && var.create_api_subdomain ? 1 : 0
   zone_id = var.create_hosted_zone ? aws_route53_zone.primary[0].zone_id : var.hosted_zone_id
-  name    = "api.${var.domain_name}"
+  name    = "api.schoolsmart.co.uk"
   type    = "CNAME"
   records = [var.api_gateway_domain_name]
   ttl     = 60
