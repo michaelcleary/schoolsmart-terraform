@@ -14,3 +14,8 @@ variable "lambda_code_bucket" {
 variable "auth_bucket" {
   description = "The bucket where access keys are stored"
 }
+
+variable "invoices_table_stream_arn" {
+  description = "The ARN of the DynamoDB stream for the invoices table"
+  type        = string
+}

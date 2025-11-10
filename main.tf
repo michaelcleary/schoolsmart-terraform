@@ -69,10 +69,11 @@ module "database" {
 
 module "lambda" {
   source = "./lambda"
-  env                = var.env
-  aws_account        = var.aws_account
-  aws_region         = var.aws_region
-  lambda_code_bucket = aws_s3_bucket.lambda_code_bucket
-  auth_bucket = "schoolsmart-auth"
+  env                        = var.env
+  aws_account                = var.aws_account
+  aws_region                 = var.aws_region
+  lambda_code_bucket         = aws_s3_bucket.lambda_code_bucket
+  auth_bucket                = "schoolsmart-auth"
+  invoices_table_stream_arn  = module.database.invoices_table_stream_arn
 }
 
