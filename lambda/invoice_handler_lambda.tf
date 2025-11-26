@@ -57,16 +57,6 @@ resource "aws_iam_policy" "invoice_handler_lambda_policy" {
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*",
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*/index/*"
         ]
-      },
-      {
-        Effect   = "Allow",
-        Action   = [
-          "dynamodb:GetRecords",
-          "dynamodb:GetShardIterator",
-          "dynamodb:DescribeStream",
-          "dynamodb:ListStreams"
-        ],
-        Resource = var.invoices_table_stream_arn
       }
     ]
   })
@@ -116,16 +106,16 @@ resource "aws_lambda_function" "invoice_handler_lambda" {
   }
 }
 
-resource "aws_lambda_event_source_mapping" "invoice_handler_dynamodb_stream" {
-  event_source_arn  = var.invoices_table_stream_arn
-  function_name     = aws_lambda_function.invoice_handler_lambda.arn
-  starting_position = "LATEST"
-
-  filter_criteria {
-    filter {
-      pattern = jsonencode({
-        eventName = ["INSERT", "MODIFY"]
-      })
-    }
-  }
-}
+# resource "aws_lambda_event_source_mapping" "invoice_handler_dynamodb_stream" {
+#   event_source_arn  = var.invoices_table_stream_arn
+#   function_name     = aws_lambda_function.invoice_handler_lambda.arn
+#   starting_position = "LATEST"
+#
+#   filter_criteria {
+#     filter {
+#       pattern = jsonencode({
+#         eventName = ["INSERT", "MODIFY"]
+#       })
+#     }
+#   }
+# }
