@@ -15,6 +15,11 @@ resource "aws_dynamodb_table" "users_table" {
   }
 
   attribute {
+    name = "email"
+    type = "S"
+  }
+
+  attribute {
     name = "createdAt"
     type = "S"
   }
@@ -22,6 +27,13 @@ resource "aws_dynamodb_table" "users_table" {
   global_secondary_index {
     name            = "contactId-createdAt-index"
     hash_key        = "contactId"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "email-createdAt-index"
+    hash_key        = "email"
     range_key       = "createdAt"
     projection_type = "ALL"
   }
