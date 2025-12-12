@@ -50,6 +50,7 @@ resource "aws_iam_policy" "invoice_handler_lambda_policy" {
       {
         Effect   = "Allow",
         Action   = [
+          "dynamodb:BatchGetItem",
           "dynamodb:Query",
           "dynamodb:UpdateItem"
         ],
@@ -57,6 +58,16 @@ resource "aws_iam_policy" "invoice_handler_lambda_policy" {
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*",
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*/index/*"
         ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:DescribeStream",
+          "dynamodb:ListStreams"
+        ],
+        Resource = var.invoices_table_stream_arn
       }
     ]
   })
@@ -67,36 +78,17 @@ resource "aws_iam_role_policy_attachment" "invoice_handler_lambda_execution_poli
   policy_arn = aws_iam_policy.invoice_handler_lambda_policy.arn
 }
 
-data "archive_file" "invoice_handler_dummy_source" {
-  type        = "zip"
-  source_dir  = "./lambda/dummy"
-  output_path = "../lambda/dummy.zip"
-}
-
-resource "aws_s3_object" "invoice_handler_lambda_js" {
-  bucket = var.lambda_code_bucket.bucket
-  key    = "dummy.zip"
-  source = data.archive_file.dummy_source.output_path
-  etag   = filemd5(data.archive_file.invoice_handler_dummy_source.output_path)
-}
-
 resource "aws_lambda_function" "invoice_handler_lambda" {
   function_name = "invoice-handler"
   role          = aws_iam_role.invoice_handler_lambda_execution_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs18.x"
+  runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = aws_s3_object.invoice_handler_lambda_js.key
+  s3_key    = "invoice-handler/20251211-194102-ff8f3a9240ef8184ac7398f9fcc1cb05af4fac90.zip"
 
   timeout = 10
   memory_size = 128
-
-  source_code_hash = data.archive_file.dummy_source.output_base64sha256
-
-  depends_on  = [
-    aws_s3_object.invoice_handler_lambda_js
-  ]
 
   environment {
     variables = {
@@ -106,16 +98,16 @@ resource "aws_lambda_function" "invoice_handler_lambda" {
   }
 }
 
-# resource "aws_lambda_event_source_mapping" "invoice_handler_dynamodb_stream" {
-#   event_source_arn  = var.invoices_table_stream_arn
-#   function_name     = aws_lambda_function.invoice_handler_lambda.arn
-#   starting_position = "LATEST"
-#
-#   filter_criteria {
-#     filter {
-#       pattern = jsonencode({
-#         eventName = ["INSERT", "MODIFY"]
-#       })
-#     }
-#   }
-# }
+resource "aws_lambda_event_source_mapping" "invoice_handler_dynamodb_stream" {
+  event_source_arn  = var.invoices_table_stream_arn
+  function_name     = aws_lambda_function.invoice_handler_lambda.arn
+  starting_position = "LATEST"
+
+  filter_criteria {
+    filter {
+      pattern = jsonencode({
+        eventName = ["INSERT", "MODIFY"]
+      })
+    }
+  }
+}

@@ -1,25 +1,24 @@
-variable "env" {
-  description = "Environment name"
-  default     = "dev"
+variable "project_name" {
+  default = "SchoolSmart Admin"
 }
 
-variable "vpc" {
-  default = "vpc-0acf87d14d388455a"
+variable "env" {
+  description = "Environment name"
 }
 
 variable "aws_account" {
-  default = "756208870582"
+}
+
+variable "shared_services_account_id" {
 }
 
 variable "aws_region" {
   description = "AWS region for resources"
-  default     = "eu-west-2"
 }
 
 # Main site variables
 variable "main_domain_name" {
   description = "The domain name for the main site"
-  default     = "schoolsmart.co.uk"
 }
 
 variable "main_website_bucket_name" {
@@ -29,28 +28,26 @@ variable "main_website_bucket_name" {
 
 variable "main_enable_cloudfront" {
   description = "Enable CloudFront distribution for the main site"
-  default     = true
 }
 
 variable "main_enable_route53" {
   description = "Enable Route 53 for the main site domain"
-  default     = true
 }
 
 variable "main_create_hosted_zone" {
   description = "Whether to create a new hosted zone for the main site"
-  default     = true
 }
 
 variable "main_use_www_subdomain" {
   description = "Whether to create a www subdomain for the main site"
-  default     = true
 }
 
-# Admin site variables
 variable "admin_domain_name" {
   description = "The domain name for the admin site"
-  default     = "test-admin.schoolsmart.co.uk"
+}
+
+variable "api_domain_name" {
+  description = "The domain name for the API"
 }
 
 variable "admin_website_bucket_name" {
@@ -60,27 +57,18 @@ variable "admin_website_bucket_name" {
 
 variable "admin_enable_cloudfront" {
   description = "Enable CloudFront distribution for the admin site"
-  default     = true
 }
 
 variable "admin_enable_route53" {
   description = "Enable Route 53 for the admin site domain"
-  default     = true
 }
 
 variable "admin_create_hosted_zone" {
   description = "Whether to create a new hosted zone for the admin site"
-  default     = false
 }
 
 variable "admin_use_www_subdomain" {
   description = "Whether to create a www subdomain for the admin site"
-  default     = false
-}
-
-variable "lambda_bucket_name" {
-  description = "The name of the bucket where the lambda functions are kept"
-  default     = "schoolsmart-lambda"
 }
 
 # App Runner variables
@@ -105,25 +93,13 @@ variable "app_runner_port" {
 variable "app_runner_cpu" {
   description = "The amount of CPU units for the app server"
   type        = string
-  default     = "1 vCPU"
+  default     = "256"
 }
 
 variable "app_runner_memory" {
   description = "The amount of memory for the app server"
   type        = string
-  default     = "2 GB"
-}
-
-variable "app_runner_environment_variables" {
-  description = "Environment variables for the app server"
-  type        = map(string)
-  default     = {
-    NODE_ENV   = "dev"
-    PORT       = "8080"
-    S3_BUCKET = "schoolsmart-invoice-test-bucket"
-    S3_REGION = "eu-west-2"
-    JWT_SECRET = "8807425C-DA90-4BA3-BA85-AE4CEC7FBDEC"
-  }
+  default     = "512"
 }
 
 variable "app_runner_auto_deployments_enabled" {
@@ -154,4 +130,38 @@ variable "app_runner_api_prefix" {
   description = "The API path prefix that should be routed to the app server"
   type        = string
   default     = "/api"
+}
+
+variable "management_account_id" {
+  description = "The AWS account ID of the management account"
+  type        = string
+}
+
+variable "management_account_role_name" {
+  description = "The name of the role to assume in the management account"
+  type        = string
+  default     = "OrganizationAccountAccessRole"
+}
+
+variable "account_email" {
+  description = "The email address for the new AWS account"
+  type        = string
+  default     = ""
+}
+
+variable "create_account" {
+  description = "Whether to create a new AWS account for this environment"
+  type        = bool
+  default     = false
+}
+
+variable "email_override" {
+  description = "Override email for non-production environment"
+  type        = string
+  default     = ""
+}
+
+variable "client_version" {
+  description = "The version of the client app to deploy"
+  type = number
 }

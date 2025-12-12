@@ -57,7 +57,7 @@ resource "aws_lambda_function" "enquiry_form_lambda" {
   function_name = "form_handler_lambda"
   role          = aws_iam_role.enquiry_lambda_execution_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs18.x"
+  runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
   s3_key    = aws_s3_object.enquiry_lambda_js.key

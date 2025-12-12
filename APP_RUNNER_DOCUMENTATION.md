@@ -46,10 +46,6 @@ app_runner_image_tag = "latest"
 app_runner_port = 8080
 app_runner_cpu = "1 vCPU"
 app_runner_memory = "2 GB"
-app_runner_environment_variables = {
-  ENV = "production"
-  LOG_LEVEL = "info"
-}
 app_runner_api_prefix = "/api"
 ```
 

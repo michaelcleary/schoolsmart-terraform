@@ -67,36 +67,17 @@ resource "aws_iam_role_policy_attachment" "webhooks_lambda_execution_policy_atta
   policy_arn = aws_iam_policy.webhooks_lambda_policy.arn
 }
 
-data "archive_file" "dummy_source" {
-  type        = "zip"
-  source_dir  = "./lambda/dummy"
-  output_path = "../lambda/dummy.zip"
-}
-
-resource "aws_s3_object" "webhooks_lambda_js" {
-  bucket = var.lambda_code_bucket.bucket
-  key    = "dummy.zip"
-  source = data.archive_file.dummy_source.output_path
-  etag   = filemd5(data.archive_file.dummy_source.output_path)
-}
-
 resource "aws_lambda_function" "webhooks_lambda" {
   function_name = "xero-webhook"
   role          = aws_iam_role.webhooks_lambda_execution_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs18.x"
+  runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = aws_s3_object.webhooks_lambda_js.key
+  s3_key    = "xero-webhook/20251211-194109-ff8f3a9240ef8184ac7398f9fcc1cb05af4fac90.zip"
 
   timeout = 10
   memory_size = 128
-
-  source_code_hash = data.archive_file.dummy_source.output_base64sha256
-
-  depends_on  = [
-    aws_s3_object.webhooks_lambda_js
-  ]
 
   environment {
     variables = {

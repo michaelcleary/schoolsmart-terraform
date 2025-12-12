@@ -1,21 +1,35 @@
+data "aws_s3_bucket" "static_website" {
+  provider = aws.shared
+  bucket = var.website_bucket_name
+}
+
 resource "aws_cloudfront_origin_access_identity" "origin_identity" {
   comment = "Origin Access Identity for CloudFront to access S3 for ${var.domain_name}"
 }
 
+resource "aws_cloudfront_origin_access_control" "s3" {
+  name                              = "${var.env}-s3-oac"
+  description                       = "OAC for S3 bucket in shared services"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_distribution" "s3_distribution" {
   count = var.enable_cloudfront ? 1 : 0
-  
+
   enabled             = true
   default_root_object = "index.html"
 
   origin {
-    domain_name = aws_s3_bucket.static_website.bucket_regional_domain_name
-    origin_id   = aws_s3_bucket.static_website.id
+    domain_name = data.aws_s3_bucket.static_website.bucket_regional_domain_name
+    origin_id   = data.aws_s3_bucket.static_website.id
     origin_path = var.origin_path
+    origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.origin_identity.cloudfront_access_identity_path
-    }
+      # s3_origin_config {
+      #   origin_access_identity = aws_cloudfront_origin_access_identity.origin_identity.cloudfront_access_identity_path
+      # }
   }
 
   dynamic "origin" {
@@ -36,7 +50,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = aws_s3_bucket.static_website.id
+    target_origin_id = data.aws_s3_bucket.static_website.id
 
     viewer_protocol_policy = "redirect-to-https"
     forwarded_values {

@@ -18,6 +18,7 @@ resource "aws_acm_certificate" "cert" {
 
 # ACM DNS Validation using Route 53
 resource "aws_route53_record" "cert_validation" {
+  provider = aws.shared
   for_each = {
     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
       name  = dvo.resource_record_name
@@ -26,13 +27,11 @@ resource "aws_route53_record" "cert_validation" {
     }
   }
 
-  zone_id = var.create_hosted_zone ? aws_route53_zone.primary[0].zone_id : var.hosted_zone_id
+  zone_id = var.hosted_zone_id
   name    = each.value.name
   type    = each.value.type
   ttl     = 60
   records = [each.value.value]
-
-  depends_on = [aws_route53_zone.primary]
 }
 
 resource "aws_acm_certificate_validation" "cert_validation" {

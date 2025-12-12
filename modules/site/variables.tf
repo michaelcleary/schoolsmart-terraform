@@ -60,12 +60,6 @@ variable "create_api_subdomain" {
   default     = false
 }
 
-variable "api_gateway_domain_name" {
-  description = "API Gateway domain name for API subdomain (if create_api_subdomain is true)"
-  type        = string
-  default     = ""
-}
-
 variable "enable_api_gateway" {
   description = "Is API gateway enabled"
   type        = bool

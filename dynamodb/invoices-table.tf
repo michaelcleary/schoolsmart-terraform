@@ -3,7 +3,7 @@ resource "aws_dynamodb_table" "invoices_table" {
   name           = "${var.env}-schoolsmart-admin-invoices"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "id"
-  stream_enabled   = false
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
   point_in_time_recovery {
     enabled = true
