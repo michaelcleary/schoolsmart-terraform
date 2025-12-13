@@ -83,3 +83,35 @@ output "app_runner_api_endpoint" {
 #   value       = aws_ses_configuration_set.main.name
 #   description = "The name of the SES configuration set"
 # }
+
+# AWS Amplify outputs
+output "amplify_app_id" {
+  value       = aws_amplify_app.main.id
+  description = "The unique ID of the Amplify app"
+}
+
+output "amplify_app_arn" {
+  value       = aws_amplify_app.main.arn
+  description = "The ARN of the Amplify app"
+}
+
+output "amplify_default_domain" {
+  value       = aws_amplify_app.main.default_domain
+  description = "The default domain for the Amplify app"
+}
+
+output "amplify_main_branch_url" {
+  value       = var.amplify_repository_url != "" ? "https://${var.amplify_main_branch_name}.${aws_amplify_app.main.default_domain}" : null
+  description = "The URL for the main branch"
+}
+
+output "amplify_custom_domain" {
+  value       = var.amplify_enable_custom_domain ? var.amplify_domain_name : null
+  description = "The custom domain for the Amplify app"
+}
+
+output "amplify_webhook_url" {
+  value       = var.amplify_create_webhook ? aws_amplify_webhook.main[0].url : null
+  description = "The webhook URL for triggering builds"
+  sensitive   = true
+}

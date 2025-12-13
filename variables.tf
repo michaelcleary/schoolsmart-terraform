@@ -165,3 +165,153 @@ variable "client_version" {
   description = "The version of the client app to deploy"
   type = number
 }
+
+# AWS Amplify variables
+variable "amplify_repository_url" {
+  description = "The repository URL for the Amplify app (leave empty for manual deploys)"
+  type        = string
+  default     = ""
+}
+
+variable "amplify_github_access_token" {
+  description = "GitHub personal access token for private repositories"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "amplify_monorepo_app_root" {
+  description = "The root directory of the app in a monorepo (e.g., 'apps/web')"
+  type        = string
+  default     = ""
+}
+
+variable "amplify_main_branch_name" {
+  description = "The main branch name for Amplify"
+  type        = string
+  default     = "main"
+}
+
+variable "amplify_build_spec" {
+  description = "Custom build specification for Amplify (leave empty for default)"
+  type        = string
+  default     = ""
+}
+
+variable "amplify_environment_variables" {
+  description = "Environment variables for Amplify app"
+  type        = map(string)
+  default     = {}
+}
+
+variable "amplify_branch_environment_variables" {
+  description = "Environment variables specific to the main branch"
+  type        = map(string)
+  default     = {}
+}
+
+variable "amplify_enable_auto_branch_creation" {
+  description = "Enable automatic branch creation in Amplify"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_enable_branch_auto_build" {
+  description = "Enable automatic builds for branches"
+  type        = bool
+  default     = true
+}
+
+variable "amplify_enable_branch_auto_deletion" {
+  description = "Enable automatic deletion of branches"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_custom_rules" {
+  description = "Custom rewrite and redirect rules for Amplify"
+  type = list(object({
+    source = string
+    target = string
+    status = string
+  }))
+  default = []
+}
+
+variable "amplify_platform" {
+  description = "Platform type for Amplify app"
+  type        = string
+  default     = "WEB"
+}
+
+variable "amplify_additional_branches" {
+  description = "Additional branches to create in Amplify"
+  type = map(object({
+    enable_auto_build      = optional(bool, true)
+    environment_variables  = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "amplify_enable_custom_domain" {
+  description = "Enable custom domain for Amplify app"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_domain_name" {
+  description = "Custom domain name for Amplify app"
+  type        = string
+  default     = ""
+}
+
+variable "amplify_domain_prefix" {
+  description = "Domain prefix for the main branch (empty for apex domain)"
+  type        = string
+  default     = ""
+}
+
+variable "amplify_enable_www_subdomain" {
+  description = "Enable www subdomain for Amplify app"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_branch_subdomains" {
+  description = "Subdomain mappings for additional branches"
+  type = list(object({
+    branch_name = string
+    prefix      = string
+  }))
+  default = []
+}
+
+variable "amplify_wait_for_verification" {
+  description = "Wait for domain verification before completing"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_enable_route53" {
+  description = "Create Route53 records for Amplify domain"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_create_webhook" {
+  description = "Create a webhook for triggering builds"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_create_backend_environment" {
+  description = "Create backend environment for Amplify"
+  type        = bool
+  default     = false
+}
+
+variable "amplify_deployment_artifacts_bucket" {
+  description = "S3 bucket for Amplify deployment artifacts"
+  type        = string
+  default     = ""
+}
