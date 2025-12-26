@@ -108,69 +108,6 @@ resource "aws_apigatewayv2_route" "admin_api_post_route" {
 #   target    = "integrations/${aws_apigatewayv2_integration.admin_api_integration.id}"
 # }
 
-resource "aws_lambda_permission" "enquiry_lambda_permission" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda.enquiry_form_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.admin_api.execution_arn}/*"
-}
-
-resource "aws_apigatewayv2_integration" "enquiry_lambda_integration" {
-  api_id = aws_apigatewayv2_api.admin_api.id
-  integration_type = "AWS_PROXY"
-  integration_uri = module.lambda.enquiry_form_lambda.invoke_arn
-  integration_method = "POST"
-}
-
-resource "aws_apigatewayv2_route" "enquiry_post_route" {
-  api_id = aws_apigatewayv2_api.admin_api.id
-  route_key = "POST /submit"
-  target    = "integrations/${aws_apigatewayv2_integration.enquiry_lambda_integration.id}"
-}
-
-resource "aws_lambda_permission" "webhooks_lambda_permission" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda.webhooks_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.admin_api.execution_arn}/*"
-}
-
-resource "aws_apigatewayv2_integration" "webhooks_lambda_integration" {
-  api_id = aws_apigatewayv2_api.admin_api.id
-  integration_type = "AWS_PROXY"
-  integration_uri = module.lambda.webhooks_lambda.invoke_arn
-  integration_method = "POST"
-}
-
-resource "aws_apigatewayv2_route" "webhooks_post_route" {
-  api_id = aws_apigatewayv2_api.admin_api.id
-  route_key = "POST /webhooks"
-  target    = "integrations/${aws_apigatewayv2_integration.webhooks_lambda_integration.id}"
-}
-
-resource "aws_lambda_permission" "example_lambda_permission" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda.example_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.admin_api.execution_arn}/*"
-}
-
-resource "aws_apigatewayv2_integration" "example_lambda_integration" {
-  api_id = aws_apigatewayv2_api.admin_api.id
-  integration_type = "AWS_PROXY"
-  integration_uri = module.lambda.example_lambda.invoke_arn
-  integration_method = "POST"
-}
-
-resource "aws_apigatewayv2_route" "example_post_route" {
-  api_id = aws_apigatewayv2_api.admin_api.id
-  route_key = "POST /example"
-  target    = "integrations/${aws_apigatewayv2_integration.example_lambda_integration.id}"
-}
-
 resource "aws_apigatewayv2_route" "auth_get_route" {
   api_id = aws_apigatewayv2_api.admin_api.id
   route_key = "GET /auth/{proxy+}"
