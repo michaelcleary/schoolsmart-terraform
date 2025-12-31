@@ -45,7 +45,7 @@ resource "aws_iam_policy" "invoice_handler_lambda_policy" {
         Action   = [
           "s3:GetObject"
         ],
-        Resource = "arn:aws:s3:::${var.auth_bucket}/*"
+        Resource = "${var.auth_bucket.arn}/*"
       },
       {
         Effect   = "Allow",
@@ -85,7 +85,7 @@ resource "aws_lambda_function" "invoice_handler_lambda" {
   runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "invoice-handler/20251211-194102-ff8f3a9240ef8184ac7398f9fcc1cb05af4fac90.zip"
+  s3_key    = "invoice-handler/20251230-135633-5ebccb6f01cffb9f455e4189a5adc8d24cfe3567.zip"
 
   timeout = 10
   memory_size = 128
@@ -93,7 +93,7 @@ resource "aws_lambda_function" "invoice_handler_lambda" {
   environment {
     variables = {
       NODE_ENV = var.env,
-      AUTH_BUCKET_NAME = var.auth_bucket
+      AUTH_BUCKET_NAME = var.auth_bucket.bucket
     }
   }
 }

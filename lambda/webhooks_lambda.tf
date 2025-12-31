@@ -45,7 +45,7 @@ resource "aws_iam_policy" "webhooks_lambda_policy" {
         Action   = [
           "s3:GetObject"
         ],
-        Resource = "arn:aws:s3:::${var.auth_bucket}/*"
+        Resource = "${var.auth_bucket.arn}/*"
       },
       {
         Effect   = "Allow",
@@ -74,7 +74,7 @@ resource "aws_lambda_function" "webhooks_lambda" {
   runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "xero-webhook/20251211-194109-ff8f3a9240ef8184ac7398f9fcc1cb05af4fac90.zip"
+  s3_key    = "xero-webhook/20251230-123610-3b04bc925b5130022701ecff9be8b46380b95c5d.zip"
 
   timeout = 10
   memory_size = 128
@@ -82,7 +82,7 @@ resource "aws_lambda_function" "webhooks_lambda" {
   environment {
     variables = {
       NODE_ENV = var.env,
-      AUTH_BUCKET_NAME = var.auth_bucket
+      AUTH_BUCKET_NAME = var.auth_bucket.bucket
     }
   }
 }

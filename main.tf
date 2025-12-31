@@ -97,6 +97,15 @@ resource "aws_s3_bucket" "invoice_bucket" {
   }
 }
 
+resource "aws_s3_bucket" "xero_auth_bucket" {
+  bucket = local.xero_auth_bucket_name
+
+  tags = {
+    Name        = "XeroAuthBucket"
+    Environment = var.env
+  }
+}
+
 resource "random_string" "jwt_secret" {
   length  = 20
   special = false
@@ -157,7 +166,7 @@ module "lambda" {
   aws_account                = var.aws_account
   aws_region                 = var.aws_region
   lambda_code_bucket         = data.aws_s3_bucket.lambda_code_bucket
-  auth_bucket                = "schoolsmart-auth"
+  auth_bucket                = aws_s3_bucket.xero_auth_bucket
   invoices_table_stream_arn  = module.database.invoices_table_stream_arn
 }
 
@@ -166,6 +175,7 @@ locals {
   account_role_arn = "arn:aws:iam::${var.aws_account}:role/OrganizationAccountAccessRole"
   lambda_bucket_name = "schoolsmart-lambda"
   invoice_bucket_name = "schoolsmart-${var.env}-invoices"
+  xero_auth_bucket_name = "schoolsmart-${var.env}-xero-auth"
   app_runner_env_vars = {
       NODE_ENV = var.env
       S3_REGION = var.aws_region
