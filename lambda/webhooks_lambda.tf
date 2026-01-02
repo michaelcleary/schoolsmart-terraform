@@ -3,54 +3,59 @@ module "webhooks_lambda" {
 
   function_name = "xero-webhook"
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
+  iam_policy_statements = [
       {
-        Action = [
+        effect = "Allow"
+        actions = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Effect   = "Allow",
-        Resource = "*"
+        resources = [
+          "*"
+        ]
       },
       {
-        Effect   = "Allow",
-        Action   = [
+        effect = "Allow",
+        actions = [
           "ssm:GetParameter",
           "ssm:GetParameters",
           "ssm:GetParametersByPath"
         ],
-        Resource = "arn:aws:ssm:${var.aws_region}:${var.aws_account}:parameter/schoolsmart/${var.env}/*"
+        resources = [
+          "arn:aws:ssm:${var.aws_region}:${var.aws_account}:parameter/schoolsmart/${var.env}/*"
+        ]
       },
       {
-        Effect   = "Allow",
-        Action   = [
+        effect   = "Allow",
+        actions   = [
           "s3:GetObject"
         ],
-        Resource = "${var.auth_bucket.arn}/*"
+        resources = [
+          "${var.auth_bucket.arn}/*"
+        ]
       },
       {
-        Effect   = "Allow",
-        Action   = [
+        effect   = "Allow",
+        actions   = [
           "dynamodb:Query",
           "dynamodb:UpdateItem"
         ],
-        "Resource": [
+        resources = [
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*",
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*/index/*"
         ]
       }
-    ]
-  })
-}
+  ]
 
   env = var.env
 
+  aws_region = var.aws_region
+  aws_account_id = var.aws_account
+
   environment_variables = {
     NODE_ENV         = var.env
-    AUTH_BUCKET_NAME = var.auth_bucket
+    AUTH_BUCKET_NAME = var.auth_bucket.bucket
   }
 
   s3_bucket = var.lambda_code_bucket.bucket
@@ -62,10 +67,4 @@ module "webhooks_lambda" {
     route_keys = ["POST /webhooks"]
   }
 
-  environment {
-    variables = {
-      NODE_ENV = var.env,
-      AUTH_BUCKET_NAME = var.auth_bucket.bucket
-    }
-  ]
 }
