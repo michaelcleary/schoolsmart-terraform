@@ -46,6 +46,11 @@ output "app_runner_api_endpoint" {
   description = "The API endpoint for the App Runner service"
 }
 
+output "api_gateway_v2_api_id" {
+  value       = aws_apigatewayv2_api.admin_api.id
+  description = "The ID of the API Gateway V2 (HTTP API)"
+}
+
 # output "app_runner_cloudfront_domain" {
 #   value       = aws_cloudfront_distribution.app_runner_distribution.domain_name
 #   description = "The CloudFront domain for the App Runner service"

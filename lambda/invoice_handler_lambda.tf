@@ -1,5 +1,5 @@
-resource "aws_iam_role" "invoice_handler_lambda_execution_role" {
-  name = "invoice_handler_lambda_execution_role"
+module "invoice_handler_lambda" {
+  source = "../modules/lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -80,15 +80,11 @@ resource "aws_iam_role_policy_attachment" "invoice_handler_lambda_execution_poli
 
 resource "aws_lambda_function" "invoice_handler_lambda" {
   function_name = "invoice-handler"
-  role          = aws_iam_role.invoice_handler_lambda_execution_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
   s3_key    = "invoice-handler/20251230-135633-5ebccb6f01cffb9f455e4189a5adc8d24cfe3567.zip"
 
-  timeout = 10
-  memory_size = 128
+  env = var.env
 
   environment {
     variables = {
@@ -96,18 +92,64 @@ resource "aws_lambda_function" "invoice_handler_lambda" {
       AUTH_BUCKET_NAME = var.auth_bucket.bucket
     }
   }
-}
 
-resource "aws_lambda_event_source_mapping" "invoice_handler_dynamodb_stream" {
-  event_source_arn  = var.invoices_table_stream_arn
-  function_name     = aws_lambda_function.invoice_handler_lambda.arn
-  starting_position = "LATEST"
-
-  filter_criteria {
-    filter {
-      pattern = jsonencode({
+  # DynamoDB Stream Trigger
+  dynamodb_stream_config = {
+    event_source_arn  = var.invoices_table_stream_arn
+    starting_position = "LATEST"
+    batch_size        = 100
+    filter_patterns = [
+      jsonencode({
         eventName = ["INSERT", "MODIFY"]
       })
-    }
+    ]
   }
+
+  # IAM Permissions
+  iam_policy_statements = [
+    {
+      effect = "Allow"
+      actions = [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath"
+      ]
+      resources = [
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account}:parameter/schoolsmart/${var.env}/*"
+      ]
+    },
+    {
+      effect = "Allow"
+      actions = [
+        "s3:GetObject"
+      ]
+      resources = [
+        "arn:aws:s3:::${var.auth_bucket}/*"
+      ]
+    },
+    {
+      effect = "Allow"
+      actions = [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem"
+      ]
+      resources = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*/index/*"
+      ]
+    },
+    {
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:DescribeStream",
+        "dynamodb:ListStreams"
+      ]
+      resources = [
+        var.invoices_table_stream_arn
+      ]
+    }
+  ]
 }

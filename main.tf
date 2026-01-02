@@ -168,6 +168,9 @@ module "lambda" {
   lambda_code_bucket         = data.aws_s3_bucket.lambda_code_bucket
   auth_bucket                = aws_s3_bucket.xero_auth_bucket
   invoices_table_stream_arn  = module.database.invoices_table_stream_arn
+  api_gateway_v2_api_id      = aws_apigatewayv2_api.admin_api.id
+  email_override             = var.email_override
+  shared_services_account_id = var.shared_services_account_id
 }
 
 locals {
