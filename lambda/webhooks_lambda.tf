@@ -3,8 +3,48 @@ module "webhooks_lambda" {
 
   function_name = "xero-webhook"
 
-  s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "xero-webhook/20251213-155815-80f5ff160469467a75e6bed8951f73343dc38f93.zip"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ],
+        Resource = "arn:aws:ssm:${var.aws_region}:${var.aws_account}:parameter/schoolsmart/${var.env}/*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "s3:GetObject"
+        ],
+        Resource = "${var.auth_bucket.arn}/*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "dynamodb:Query",
+          "dynamodb:UpdateItem"
+        ],
+        "Resource": [
+          "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*",
+          "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*/index/*"
+        ]
+      }
+    ]
+  })
+}
 
   env = var.env
 
@@ -13,8 +53,8 @@ module "webhooks_lambda" {
     AUTH_BUCKET_NAME = var.auth_bucket
   }
 
-  aws_region     = var.aws_region
-  aws_account_id = var.aws_account
+  s3_bucket = var.lambda_code_bucket.bucket
+  s3_key    = "xero-webhook/20251230-123610-3b04bc925b5130022701ecff9be8b46380b95c5d.zip"
 
   # API Gateway V2 Trigger
   api_gateway_v2_config = {
@@ -22,38 +62,10 @@ module "webhooks_lambda" {
     route_keys = ["POST /webhooks"]
   }
 
-  # IAM Permissions
-  iam_policy_statements = [
-    {
-      effect = "Allow"
-      actions = [
-        "ssm:GetParameter",
-        "ssm:GetParameters",
-        "ssm:GetParametersByPath"
-      ]
-      resources = [
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account}:parameter/schoolsmart/${var.env}/*"
-      ]
-    },
-    {
-      effect = "Allow"
-      actions = [
-        "s3:GetObject"
-      ]
-      resources = [
-        "arn:aws:s3:::${var.auth_bucket}/*"
-      ]
-    },
-    {
-      effect = "Allow"
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem"
-      ]
-      resources = [
-        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*",
-        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/*/index/*"
-      ]
+  environment {
+    variables = {
+      NODE_ENV = var.env,
+      AUTH_BUCKET_NAME = var.auth_bucket.bucket
     }
   ]
 }
