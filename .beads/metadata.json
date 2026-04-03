@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "schoolsmart_terraform",
+  "project_id": "34424da9-628d-4924-9f19-2c8b9764ac8b"
+}
