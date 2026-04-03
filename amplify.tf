@@ -26,5 +26,6 @@ module "amplify" {
   environment_variables = {
     NEXT_PUBLIC_API_URL = "https://${var.api_domain_name}"
     API_BASE_URL        = "https://${var.api_domain_name}"
+    SESSION_SECRET      = random_password.session_secret.result
   }
 }

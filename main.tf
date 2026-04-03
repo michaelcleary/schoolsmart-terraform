@@ -111,6 +111,11 @@ resource "random_string" "jwt_secret" {
   special = false
 }
 
+resource "random_password" "session_secret" {
+  length  = 32
+  special = false
+}
+
 # Deploy the main site
 # module "main_site" {
 #   source = "./modules/site"
