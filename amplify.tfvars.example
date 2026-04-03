@@ -1,0 +1,44 @@
+# Amplify / NextJS configuration
+# These values are already set in the environment-specific tfvars files.
+#
+# PREREQUISITE — create a fine-grained GitHub PAT and store it in Secrets Manager:
+#
+# 1. Create a fine-grained PAT in GitHub:
+#    github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+#    - Resource owner: your org
+#    - Repository access: schoolsmart-admin only
+#    - Permissions:
+#        Contents  = Read-only      (so Amplify can clone the repo)
+#        Webhooks  = Read and write  (so Amplify can register a deploy key)
+#    Note: Amplify only uses this token at app-creation time to set up a deploy key.
+#    Subsequent builds use that deploy key (SSH), not this token.
+#
+# 2. Store the token in Secrets Manager in each environment account:
+#
+#    aws secretsmanager create-secret \
+#      --name amplify/github-app-token \
+#      --secret-string "github_pat_xxx" \
+#      --region eu-west-2
+#
+#    Run this once per account (dev, test, prod).
+#
+# 3. To rotate the token later — no Terraform change needed:
+#
+#    aws secretsmanager put-secret-value \
+#      --secret-id amplify/github-app-token \
+#      --secret-string "new_token_value"
+
+# GitHub repository containing the NextJS monorepo (apps/next)
+amplify_repository_url = "https://github.com/your-org/your-monorepo"
+
+# Secrets Manager secret name holding the GitHub token
+amplify_github_token_secret_name = "amplify/github-app-token"
+
+# Git branch to deploy for this environment
+amplify_branch_name = "main"
+
+# Subdomain prefix for the NextJS app:
+#   dev  → "dev-app"  → dev-app.schoolsmart.co.uk
+#   test → "test-app" → test-app.schoolsmart.co.uk
+#   prod → "app"      → app.schoolsmart.co.uk
+amplify_domain_prefix = "app"

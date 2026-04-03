@@ -51,6 +51,21 @@ output "api_gateway_v2_api_id" {
   description = "The ID of the API Gateway V2 (HTTP API)"
 }
 
+output "amplify_app_id" {
+  value       = module.amplify.app_id
+  description = "Amplify app ID — needed by CI/CD to trigger deployments (aws amplify start-job)"
+}
+
+output "amplify_branch_name" {
+  value       = module.amplify.branch_name
+  description = "Amplify branch being deployed"
+}
+
+output "amplify_domain" {
+  value       = module.amplify.custom_domain
+  description = "Custom domain for the NextJS app"
+}
+
 # output "app_runner_cloudfront_domain" {
 #   value       = aws_cloudfront_distribution.app_runner_distribution.domain_name
 #   description = "The CloudFront domain for the App Runner service"

@@ -165,3 +165,25 @@ variable "client_version" {
   description = "The version of the client app to deploy"
   type = number
 }
+
+# Amplify / NextJS variables
+variable "amplify_repository_url" {
+  description = "GitHub repository URL for the NextJS monorepo"
+  type        = string
+}
+
+variable "amplify_github_token_secret_name" {
+  description = "Secrets Manager secret name holding the GitHub App installation token for Amplify"
+  type        = string
+}
+
+variable "amplify_branch_name" {
+  description = "Git branch to deploy to this environment"
+  type        = string
+  default     = "main"
+}
+
+variable "amplify_domain_prefix" {
+  description = "Subdomain prefix for the NextJS app (e.g. 'app', 'dev-app', 'test-app')"
+  type        = string
+}
