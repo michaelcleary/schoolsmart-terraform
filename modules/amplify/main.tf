@@ -36,6 +36,27 @@ resource "aws_iam_role_policy" "amplify_cloudwatch" {
   })
 }
 
+# Amplify stores app environment variables in SSM Parameter Store and reads them
+# via the service role during builds. Without this, builds silently fail to load
+# env vars ("Failed to set up process.env.secrets").
+resource "aws_iam_role_policy" "amplify_ssm" {
+  name = "ssm-env-vars"
+  role = aws_iam_role.amplify.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ssm:GetParametersByPath",
+        "ssm:GetParameters",
+        "ssm:GetParameter"
+      ]
+      Resource = "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/amplify/*"
+    }]
+  })
+}
+
 resource "aws_iam_role" "amplify_compute" {
   name = "${var.app_name}-amplify-compute-role"
 
