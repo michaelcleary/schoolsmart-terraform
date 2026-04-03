@@ -24,8 +24,7 @@ module "amplify" {
   hosted_zone_id      = data.aws_route53_zone.primary.zone_id
 
   environment_variables = {
-    NEXT_PUBLIC_API_URL = "https://${var.api_domain_name}"
-    API_BASE_URL        = "https://${var.api_domain_name}"
-    SESSION_SECRET      = random_password.session_secret.result
+    API_BASE_URL   = "https://${var.api_domain_name}"
+    SESSION_SECRET = random_password.session_secret.result
   }
 }
