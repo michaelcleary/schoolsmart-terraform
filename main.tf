@@ -176,6 +176,7 @@ module "lambda" {
   api_gateway_v2_api_id      = aws_apigatewayv2_api.admin_api.id
   email_override             = var.email_override
   shared_services_account_id = var.shared_services_account_id
+  cognito_user_pool_arn      = aws_cognito_user_pool.main.arn
 }
 
 locals {

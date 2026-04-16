@@ -33,5 +33,10 @@ variable "email_override" {
 }
 
 variable "shared_services_account_id" {
+}
 
+variable "cognito_user_pool_arn" {
+  description = "ARN of the Cognito User Pool (used by pre-token generation Lambda IAM policy)"
+  type        = string
+  default     = ""
 }

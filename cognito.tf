@@ -4,184 +4,42 @@
 # The User Pool is the identity store for the Next.js application.
 # The Angular SPA continues to use the legacy Passport.js / JWT path on the
 # App Runner service; Cognito is purely additive during the Angular transition.
+#
+# Lambda functions (user migration, pre-token generation) are defined in the
+# lambda/ module following the same pattern as all other Lambda functions.
+# Source code and S3 deployment are managed by the schoolsmart-admin CI/CD.
 # ---------------------------------------------------------------------------
 
-# ---- Lambda source packaging ----
+# ---- State migration ----
+# Lambda functions were originally defined as standalone root resources.
+# moved blocks rename them in state so they are not destroyed and recreated.
 
-# Install npm dependencies for the migration Lambda before archiving.
-# Requires npm to be available on the machine running terraform apply.
-resource "null_resource" "cognito_migration_npm_install" {
-  triggers = {
-    package_json = filesha256("${path.module}/lambda/cognito-migration/package.json")
-    index_js     = filesha256("${path.module}/lambda/cognito-migration/index.js")
-  }
-
-  provisioner "local-exec" {
-    command = "npm install --production --prefix ${path.module}/lambda/cognito-migration"
-  }
+moved {
+  from = aws_lambda_function.cognito_migration
+  to   = module.lambda.module.cognito_migration_lambda.aws_lambda_function.function
 }
 
-data "archive_file" "cognito_migration_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda/cognito-migration"
-  output_path = "${path.module}/.terraform/lambda_packages/cognito-migration.zip"
-
-  depends_on = [null_resource.cognito_migration_npm_install]
+moved {
+  from = aws_lambda_function.cognito_pretokengen
+  to   = module.lambda.module.cognito_pretokengen_lambda.aws_lambda_function.function
 }
 
-data "archive_file" "cognito_pretokengen_zip" {
-  type = "zip"
-  source {
-    content  = file("${path.module}/lambda/cognito-pretokengen/index.js")
-    filename = "index.js"
-  }
-  output_path = "${path.module}/.terraform/lambda_packages/cognito-pretokengen.zip"
-}
-
-# ---- IAM: Migration Lambda ----
-
-resource "aws_iam_role" "cognito_migration_lambda_role" {
-  name = "${var.env}-cognito-migration-lambda-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "lambda.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
-
-resource "aws_iam_policy" "cognito_migration_lambda_policy" {
-  name        = "${var.env}-cognito-migration-lambda-policy"
-  description = "Allows migration Lambda to read legacy users table and write CloudWatch logs"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-        ]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["dynamodb:GetItem"]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account}:table/${var.env}-schoolsmart-admin-users"
-      },
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "cognito_migration_lambda_policy_attachment" {
-  role       = aws_iam_role.cognito_migration_lambda_role.name
-  policy_arn = aws_iam_policy.cognito_migration_lambda_policy.arn
-}
-
-# ---- Lambda: Migration ----
-
-resource "aws_lambda_function" "cognito_migration" {
-  function_name    = "${var.env}-cognito-migration"
-  role             = aws_iam_role.cognito_migration_lambda_role.arn
-  handler          = "index.handler"
-  runtime          = "nodejs22.x"
-  filename         = data.archive_file.cognito_migration_zip.output_path
-  source_code_hash = data.archive_file.cognito_migration_zip.output_base64sha256
-  timeout          = 10
-  memory_size      = 128
-
-  environment {
-    variables = {
-      NODE_ENV    = var.env
-      USERS_TABLE = "${var.env}-schoolsmart-admin-users"
-    }
-  }
-
-  tags = {
-    Name        = "CognitoMigrationLambda"
-    Environment = var.env
-  }
-}
+# ---- Lambda permissions (Cognito → Lambda) ----
+# Kept here rather than in the lambda/ module because they need to reference
+# the Cognito User Pool ARN, which is defined in this file.
 
 resource "aws_lambda_permission" "cognito_migration_invoke" {
   statement_id  = "AllowCognitoInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.cognito_migration.function_name
+  function_name = module.lambda.cognito_migration_function_name
   principal     = "cognito-idp.amazonaws.com"
   source_arn    = aws_cognito_user_pool.main.arn
-}
-
-# ---- IAM: Pre-Token Generation Lambda ----
-
-resource "aws_iam_role" "cognito_pretokengen_lambda_role" {
-  name = "${var.env}-cognito-pretokengen-lambda-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "lambda.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
-
-resource "aws_iam_policy" "cognito_pretokengen_lambda_policy" {
-  name        = "${var.env}-cognito-pretokengen-lambda-policy"
-  description = "Allows pre-token generation Lambda to write CloudWatch logs"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-      ]
-      Resource = "*"
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "cognito_pretokengen_lambda_policy_attachment" {
-  role       = aws_iam_role.cognito_pretokengen_lambda_role.name
-  policy_arn = aws_iam_policy.cognito_pretokengen_lambda_policy.arn
-}
-
-# ---- Lambda: Pre-Token Generation ----
-
-resource "aws_lambda_function" "cognito_pretokengen" {
-  function_name    = "${var.env}-cognito-pretokengen"
-  role             = aws_iam_role.cognito_pretokengen_lambda_role.arn
-  handler          = "index.handler"
-  runtime          = "nodejs22.x"
-  filename         = data.archive_file.cognito_pretokengen_zip.output_path
-  source_code_hash = data.archive_file.cognito_pretokengen_zip.output_base64sha256
-  timeout          = 5
-  memory_size      = 128
-
-  environment {
-    variables = {
-      NODE_ENV = var.env
-    }
-  }
-
-  tags = {
-    Name        = "CognitoPreTokenGenLambda"
-    Environment = var.env
-  }
 }
 
 resource "aws_lambda_permission" "cognito_pretokengen_invoke" {
   statement_id  = "AllowCognitoInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.cognito_pretokengen.function_name
+  function_name = module.lambda.cognito_pretokengen_function_name
   principal     = "cognito-idp.amazonaws.com"
   source_arn    = aws_cognito_user_pool.main.arn
 }
@@ -223,7 +81,7 @@ resource "aws_cognito_user_pool" "main" {
     email_sending_account = "COGNITO_DEFAULT"
   }
 
-  # Custom attributes used by the migration Lambda and Pre-Token Gen Lambda
+  # Custom attributes used by the migration Lambda and pre-token generation Lambda
   schema {
     name                     = "contactId"
     attribute_data_type      = "String"
@@ -247,10 +105,10 @@ resource "aws_cognito_user_pool" "main" {
   }
 
   lambda_config {
-    user_migration = aws_lambda_function.cognito_migration.arn
+    user_migration = module.lambda.cognito_migration_function_arn
 
     pre_token_generation_config {
-      lambda_arn     = aws_lambda_function.cognito_pretokengen.arn
+      lambda_arn     = module.lambda.cognito_pretokengen_function_arn
       lambda_version = "V2_0"
     }
   }
