@@ -66,6 +66,21 @@ output "amplify_domain" {
   description = "Custom domain for the NextJS app"
 }
 
+output "cognito_user_pool_id" {
+  value       = aws_cognito_user_pool.main.id
+  description = "Cognito User Pool ID — needed by the Next.js and API server apps"
+}
+
+output "cognito_client_id" {
+  value       = aws_cognito_user_pool_client.nextjs.id
+  description = "Cognito App Client ID for the Next.js application"
+}
+
+output "cognito_user_pool_arn" {
+  value       = aws_cognito_user_pool.main.arn
+  description = "Cognito User Pool ARN"
+}
+
 # output "app_runner_cloudfront_domain" {
 #   value       = aws_cloudfront_distribution.app_runner_distribution.domain_name
 #   description = "The CloudFront domain for the App Runner service"

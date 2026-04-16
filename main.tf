@@ -185,12 +185,14 @@ locals {
   invoice_bucket_name = "schoolsmart-${var.env}-invoices"
   xero_auth_bucket_name = "schoolsmart-${var.env}-xero-auth"
   app_runner_env_vars = {
-      NODE_ENV = var.env
-      S3_REGION = var.aws_region
-      S3_BUCKET = local.invoice_bucket_name
-      SHARED_ACCOUNT = var.shared_services_account_id
-      JWT_SECRET = random_string.jwt_secret.id
-      PORT = 8080
-      EMAIL_OVERRIDE = var.email_override
+      NODE_ENV             = var.env
+      S3_REGION            = var.aws_region
+      S3_BUCKET            = local.invoice_bucket_name
+      SHARED_ACCOUNT       = var.shared_services_account_id
+      JWT_SECRET           = random_string.jwt_secret.id
+      PORT                 = 8080
+      EMAIL_OVERRIDE       = var.email_override
+      COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
+      COGNITO_REGION       = var.aws_region
   }
 }

@@ -24,7 +24,10 @@ module "amplify" {
   hosted_zone_id      = data.aws_route53_zone.primary.zone_id
 
   environment_variables = {
-    API_BASE_URL   = "https://${var.api_domain_name}"
-    SESSION_SECRET = random_password.session_secret.result
+    API_BASE_URL         = "https://${var.api_domain_name}"
+    SESSION_SECRET       = random_password.session_secret.result
+    COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
+    COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.nextjs.id
+    COGNITO_REGION       = var.aws_region
   }
 }
