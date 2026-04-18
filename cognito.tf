@@ -10,20 +10,6 @@
 # Source code and S3 deployment are managed by the schoolsmart-admin CI/CD.
 # ---------------------------------------------------------------------------
 
-# ---- State migration ----
-# Lambda functions were originally defined as standalone root resources.
-# moved blocks rename them in state so they are not destroyed and recreated.
-
-moved {
-  from = aws_lambda_function.cognito_migration
-  to   = module.lambda.module.cognito_migration_lambda.aws_lambda_function.function
-}
-
-moved {
-  from = aws_lambda_function.cognito_pretokengen
-  to   = module.lambda.module.cognito_pretokengen_lambda.aws_lambda_function.function
-}
-
 # ---- Lambda permissions (Cognito → Lambda) ----
 # Kept here rather than in the lambda/ module because they need to reference
 # the Cognito User Pool ARN, which is defined in this file.
