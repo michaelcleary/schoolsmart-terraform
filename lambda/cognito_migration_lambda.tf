@@ -22,7 +22,7 @@ module "cognito_migration_lambda" {
   # Zip deployed to S3 by the schoolsmart-admin CI/CD pipeline.
   # Update s3_key when a new version is released.
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "cognito-migration/latest.zip"
+  s3_key    = "cognito-migration/20260504-194144-43e977a5b037ac5821213bd86ae0c3997252e0ec.zip"
 
   timeout     = 10
   memory_size = 128

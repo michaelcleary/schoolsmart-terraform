@@ -23,7 +23,7 @@ module "cognito_pretokengen_lambda" {
   # Zip deployed to S3 by the schoolsmart-admin CI/CD pipeline.
   # Update s3_key when a new version is released.
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "cognito-pretokengen/latest.zip"
+  s3_key    = "cognito-pretokengen/20260504-194138-43e977a5b037ac5821213bd86ae0c3997252e0ec.zip"
 
   timeout     = 5
   memory_size = 128
