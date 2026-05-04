@@ -161,9 +161,10 @@ variable "email_override" {
   default     = ""
 }
 
-variable "client_version" {
-  description = "The version of the client app to deploy"
-  type = number
+variable "client_sha" {
+  description = "Git SHA of the client app to serve via CloudFront (must match the S3 prefix the app repo CI uploads to)"
+  type        = string
+  default     = ""
 }
 
 # Amplify / NextJS variables

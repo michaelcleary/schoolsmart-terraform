@@ -149,7 +149,7 @@ module "admin_site" {
   aws_region            = var.aws_region
   domain_name           = var.admin_domain_name
   website_bucket_name   = var.admin_website_bucket_name
-  origin_path           = "/v${var.client_version}"
+  origin_path           = "/${var.client_sha}"
   enable_cloudfront     = var.admin_enable_cloudfront
   enable_route53        = var.admin_enable_route53
   create_hosted_zone    = var.admin_create_hosted_zone
