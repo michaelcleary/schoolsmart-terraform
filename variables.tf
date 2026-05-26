@@ -149,6 +149,12 @@ variable "account_email" {
   default     = ""
 }
 
+variable "create_github_oidc_provider" {
+  description = "Create the GitHub OIDC provider and CI role in the management account. Must be true in at least one environment to bootstrap CI auth. Safe to leave true in all environments — the resources are idempotent."
+  type        = bool
+  default     = true
+}
+
 variable "create_account" {
   description = "Whether to create a new AWS account for this environment"
   type        = bool
