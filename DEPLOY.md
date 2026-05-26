@@ -31,20 +31,34 @@ plan job  →  [manual approval for prod]  →  apply job
 
 Dev deploys skip the approval gate and run automatically.
 
+## AWS authentication (OIDC)
+
+The workflow authenticates to AWS via **OIDC** — no long-lived credentials are stored as GitHub secrets. On each run, GitHub issues a short-lived JWT that the workflow exchanges for temporary AWS credentials by assuming the `github-actions-terraform` IAM role in the management account (`548144873869`). From there the existing `OrganizationAccountAccessRole` chain into dev/prod accounts works unchanged.
+
+The IAM role and OIDC provider are defined in `github-actions.tf` and managed by Terraform itself (with `create_github_oidc_provider = true`, which is the default).
+
 ## First-time setup
 
-### 1. AWS credentials
+### 1. Bootstrap the OIDC role (one-time)
 
-Add the following as repository secrets (or environment-level secrets for per-env isolation):
+The OIDC role must exist before the workflow can use it. Apply Terraform once from your local machine (using your existing AWS credentials) to create it:
 
-| Secret | Description |
+```bash
+terraform init
+terraform apply -var-file=dev.tfvars -target=aws_iam_openid_connect_provider.github_actions -target=aws_iam_role.github_actions_terraform -target=aws_iam_role_policy_attachment.github_actions_terraform_admin
+```
+
+After this, all subsequent applies can run via GitHub Actions.
+
+### 2. GitHub Actions variable
+
+Add one **repository variable** (not a secret) in **Settings → Variables → Actions**:
+
+| Variable | Value |
 |---|---|
-| `AWS_ACCESS_KEY_ID` | IAM access key with permissions to apply Terraform |
-| `AWS_SECRET_ACCESS_KEY` | Corresponding secret key |
+| `AWS_MANAGEMENT_ACCOUNT_ID` | `548144873869` |
 
-The IAM user / role must be able to assume the roles referenced in `main.tf` (`local.account_role_arn`, `shared_services_account_id` roles).
-
-### 2. GitHub Environments
+### 3. GitHub Environments
 
 Create two environments in **Settings → Environments**:
 
@@ -54,7 +68,3 @@ Create two environments in **Settings → Environments**:
 | `production` | Required reviewers — add at least one approver |
 
 Without a `production` environment configured, prod deploys will run without an approval gate.
-
-## Future: OIDC authentication
-
-The current setup uses long-lived IAM credentials stored as secrets. Migrating to OIDC (AWS → GitHub) eliminates the need for stored credentials. This is tracked separately.
