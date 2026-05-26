@@ -57,6 +57,9 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Terraform Workspace
+        run: terraform workspace select ${{ steps.resolve-env.outputs.environment }}
+
       - name: Terraform Plan
         run: |
           set -o pipefail
@@ -110,6 +113,9 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Terraform Workspace
+        run: terraform workspace select ${{ needs.plan.outputs.environment }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
