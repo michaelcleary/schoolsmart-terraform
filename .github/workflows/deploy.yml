@@ -1,0 +1,112 @@
+name: Terraform Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+  repository_dispatch:
+    types: [deploy]
+
+env:
+  TF_VERSION: "~1.9"
+  AWS_REGION: "eu-west-2"
+
+jobs:
+  plan:
+    name: Plan (${{ github.event_name == 'repository_dispatch' && github.event.client_payload.environment || inputs.environment }})
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve-env.outputs.environment }}
+    steps:
+      - name: Resolve environment
+        id: resolve-env
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            ENV="${{ github.event.client_payload.environment }}"
+          else
+            ENV="${{ inputs.environment }}"
+          fi
+          if [ "$ENV" != "dev" ] && [ "$ENV" != "prod" ]; then
+            echo "ERROR: environment must be dev or prod, got: $ENV"
+            exit 1
+          fi
+          echo "environment=$ENV" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file="${{ steps.resolve-env.outputs.environment }}.tfvars" \
+            -out=tfplan \
+            -no-color \
+            2>&1 | tee plan.txt
+
+      - name: Post plan to job summary
+        if: always()
+        run: |
+          ENV="${{ steps.resolve-env.outputs.environment }}"
+          echo "## Terraform Plan — \`$ENV\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 200 plan.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ steps.resolve-env.outputs.environment }}-${{ github.run_id }}
+          path: |
+            tfplan
+            plan.txt
+          retention-days: 5
+
+  apply:
+    name: Apply (${{ needs.plan.outputs.environment }})
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ needs.plan.outputs.environment == 'prod' && 'production' || 'development' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ needs.plan.outputs.environment }}-${{ github.run_id }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
