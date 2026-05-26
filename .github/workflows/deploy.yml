@@ -59,6 +59,7 @@ jobs:
 
       - name: Terraform Plan
         run: |
+          set -o pipefail
           terraform plan \
             -var-file="${{ steps.resolve-env.outputs.environment }}.tfvars" \
             -out=tfplan \
