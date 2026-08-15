@@ -22,11 +22,11 @@ admin_create_hosted_zone = false
 admin_use_www_subdomain = false
 
 email_override = "it@schoolsmart.co.uk"
-app_runner_image_tag = "17b54ad24cf563852b9b585c3c13e21e6d6ce2ac"
-client_sha = ""
+
+release_tag = "5d1864e7"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"
-amplify_branch_name              = "feature/tutor-reminders-report"
+amplify_branch_name              = "master"
 amplify_domain_prefix            = "dev-app"
 amplify_github_token_secret_name = "amplify/github-app-token"

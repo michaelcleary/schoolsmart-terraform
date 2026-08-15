@@ -59,7 +59,7 @@ module "webhooks_lambda" {
   }
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "xero-webhook/20251230-123610-3b04bc925b5130022701ecff9be8b46380b95c5d.zip"
+  s3_key    = "${var.release_tag}/xero-webhook.zip"
 
   # API Gateway V2 Trigger
   api_gateway_v2_config = {

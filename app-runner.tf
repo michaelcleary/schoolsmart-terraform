@@ -171,7 +171,7 @@ resource "aws_apprunner_service" "api_server" {
         port = var.app_runner_port
         runtime_environment_variables = local.app_runner_env_vars
       }
-      image_identifier      = "${var.app_runner_ecr_repo_url}:${var.app_runner_image_tag}"
+      image_identifier      = "${var.app_runner_ecr_repo_url}:${var.release_tag}"
       image_repository_type = "ECR"
     }
 

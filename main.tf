@@ -149,7 +149,7 @@ module "admin_site" {
   aws_region            = var.aws_region
   domain_name           = var.admin_domain_name
   website_bucket_name   = var.admin_website_bucket_name
-  origin_path           = "/${var.client_sha}"
+  origin_path           = "/${var.release_tag}"
   enable_cloudfront     = var.admin_enable_cloudfront
   enable_route53        = var.admin_enable_route53
   create_hosted_zone    = var.admin_create_hosted_zone
@@ -177,6 +177,7 @@ module "lambda" {
   email_override             = var.email_override
   shared_services_account_id = var.shared_services_account_id
   cognito_user_pool_arn      = aws_cognito_user_pool.main.arn
+  release_tag                =var.release_tag
 }
 
 locals {

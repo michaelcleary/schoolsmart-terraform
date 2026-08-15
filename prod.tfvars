@@ -21,8 +21,7 @@ admin_enable_route53    = true
 admin_create_hosted_zone = false
 admin_use_www_subdomain = false
 
-app_runner_image_tag = "17b54ad24cf563852b9b585c3c13e21e6d6ce2ac"
-client_sha = ""
+release_tag = "17b54ad24cf563852b9b585c3c13e21e6d6ce2ac"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"

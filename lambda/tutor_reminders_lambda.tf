@@ -4,7 +4,7 @@ module "tutor_reminders_lambda" {
   function_name = "tutor-reminders"
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "tutor-reminders/20260419-151801-a4491f0f61ddd54c872280aba41e1a535cf4da99.zip"
+  s3_key    = "${var.release_tag}/tutor-reminders.zip"
 
   env = var.env
 

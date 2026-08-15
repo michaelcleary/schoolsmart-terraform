@@ -40,3 +40,8 @@ variable "cognito_user_pool_arn" {
   type        = string
   default     = ""
 }
+
+variable "release_tag" {
+  description = "The github sha for the release"
+  type        = string
+}

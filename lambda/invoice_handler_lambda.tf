@@ -62,7 +62,7 @@ module "invoice_handler_lambda" {
   }
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "invoice-handler/20251230-135633-5ebccb6f01cffb9f455e4189a5adc8d24cfe3567.zip"
+  s3_key    = "${var.release_tag}/invoice-handler.zip"
 
   dynamodb_stream_config = {
     event_source_arn  = var.invoices_table_stream_arn
