@@ -37,18 +37,18 @@ module "nextjs_site" {
   use_www_subdomain    = false
   create_api_subdomain = false
 
-  # TRANSITIONAL (step 1 of 3, see nextjs_server_lambda.tf): still pointed at the API
-  # Gateway custom domain here — moving straight to api_invoke_url =
-  # module.lambda.nextjs_server_function_url_domain in the same apply that removes the old
-  # API Gateway route/integration/permission causes a Terraform dependency cycle (the
-  # distribution's output-reference dependency on module.lambda's "close", combined with
-  # this distribution's own resources being depended on by the api-gateway destroy
-  # ordering). Step 2 repoints this at the Function URL (while the old API Gateway wiring
-  # still exists, so nothing destroys yet); step 3 then removes the old wiring cleanly.
-  enable_api_gateway         = true
-  api_gateway_is_default     = true
-  api_invoke_url             = aws_apigatewayv2_domain_name.web_service_api_domain_name.domain_name
-  static_asset_path_patterns = var.nextjs_static_asset_path_patterns
+  # TRANSITIONAL (step 2 of 3, see nextjs_server_lambda.tf): repoints the default origin at
+  # the Function URL created in step 1. The old API Gateway route/integration/permission
+  # (lambda/nextjs_server_lambda.tf's api_gateway_v2_config) are deliberately left in place
+  # here still — removing them in the same apply as this origin change cycles (see step 1's
+  # comment). Step 3 removes them cleanly once this has applied.
+  enable_api_gateway          = true
+  api_gateway_is_default      = true
+  api_invoke_url              = module.lambda.nextjs_server_function_url_domain
+  default_origin_requires_oac = true
+  static_asset_path_patterns  = var.nextjs_static_asset_path_patterns
 
-  depends_on = [module.lambda]
+  # No explicit depends_on: api_invoke_url's reference to module.lambda's output already
+  # creates a precise dependency edge, and (for this step) nothing in module.lambda is being
+  # destroyed, so there's no cycle risk from dropping the old blanket depends_on.
 }
