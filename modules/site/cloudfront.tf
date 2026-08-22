@@ -8,11 +8,21 @@ resource "aws_cloudfront_origin_access_identity" "origin_identity" {
 }
 
 resource "aws_cloudfront_origin_access_control" "s3" {
-  name                              = "${var.env}-s3-oac"
+  # OAC names must be unique per account. env alone isn't a unique key once more than one
+  # modules/site instance shares an env (admin_site, nextjs_site, ...), so key off
+  # domain_name too, same as this module's aliases/cert/tags already do.
+  name                              = "${var.env}-${replace(var.domain_name, ".", "-")}-s3-oac"
   description                       = "OAC for S3 bucket in shared services"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
+
+  # Renaming forces replacement; create the new OAC and let the distribution update to
+  # reference it before the old one is destroyed, so a live distribution is never left
+  # pointing at a deleted OAC mid-apply.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
