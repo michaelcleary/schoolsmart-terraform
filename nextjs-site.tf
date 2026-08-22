@@ -37,18 +37,19 @@ module "nextjs_site" {
   use_www_subdomain    = false
   create_api_subdomain = false
 
-  # TRANSITIONAL (step 2 of 3, see nextjs_server_lambda.tf): repoints the default origin at
-  # the Function URL created in step 1. The old API Gateway route/integration/permission
-  # (lambda/nextjs_server_lambda.tf's api_gateway_v2_config) are deliberately left in place
-  # here still — removing them in the same apply as this origin change cycles (see step 1's
-  # comment). Step 3 removes them cleanly once this has applied.
-  enable_api_gateway          = true
-  api_gateway_is_default      = true
-  api_invoke_url              = module.lambda.nextjs_server_function_url_domain
-  default_origin_requires_oac = true
-  static_asset_path_patterns  = var.nextjs_static_asset_path_patterns
+  # Points the default origin at the nextjs-server Lambda's Function URL (Lambda response
+  # streaming isn't invokable through API Gateway at all — see nextjs_server_lambda.tf).
+  # default_origin_requires_oac = false: the AWS-documented AWS_IAM + OAC pattern returned a
+  # persistent, unexplained 403 (see schoolsmart-terraform-47o) — the Function URL instead
+  # uses authorization_type = NONE, secured by the shared secret sent below instead of OAC.
+  enable_api_gateway         = true
+  api_gateway_is_default     = true
+  api_invoke_url             = module.lambda.nextjs_server_function_url_domain
+  static_asset_path_patterns = var.nextjs_static_asset_path_patterns
+  default_origin_custom_headers = {
+    "X-Origin-Verify" = random_password.nextjs_origin_verify_secret.result
+  }
 
   # No explicit depends_on: api_invoke_url's reference to module.lambda's output already
-  # creates a precise dependency edge, and (for this step) nothing in module.lambda is being
-  # destroyed, so there's no cycle risk from dropping the old blanket depends_on.
+  # creates a precise dependency edge.
 }

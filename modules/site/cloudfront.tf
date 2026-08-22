@@ -65,6 +65,14 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       origin_id                 = "APIGatewayOrigin"
       origin_access_control_id  = var.default_origin_requires_oac ? aws_cloudfront_origin_access_control.lambda_url[0].id : null
 
+      dynamic "custom_header" {
+        for_each = var.default_origin_custom_headers
+        content {
+          name  = custom_header.key
+          value = custom_header.value
+        }
+      }
+
       custom_origin_config {
         http_port              = 80
         https_port             = 443

@@ -224,12 +224,18 @@ resource "aws_apigatewayv2_route" "api_gateway_v2_route" {
 resource "aws_lambda_function_url" "this" {
   count              = var.function_url_config != null ? 1 : 0
   function_name      = aws_lambda_function.function.function_name
-  authorization_type = "AWS_IAM"
+  authorization_type = var.function_url_config.authorization_type
   invoke_mode        = var.function_url_config.invoke_mode
 }
 
+# Only needed for authorization_type = "AWS_IAM" — a "NONE" Function URL is invokable by
+# anyone with the URL, no IAM permission involved (access control instead relies on the
+# caller and the function's own code, e.g. checking a shared-secret header from CloudFront).
 resource "aws_lambda_permission" "function_url_cloudfront" {
-  count                  = var.function_url_config != null ? 1 : 0
+  # && doesn't short-circuit in HCL — var.function_url_config.authorization_type would still
+  # get evaluated (and error on a null function_url_config) even when the first operand is
+  # false, for every other lambda using this module that doesn't set function_url_config.
+  count = var.function_url_config == null ? 0 : (var.function_url_config.authorization_type == "AWS_IAM" ? 1 : 0)
   statement_id           = "AllowCloudFrontInvokeFunctionUrl"
   action                 = "lambda:InvokeFunctionUrl"
   function_name          = aws_lambda_function.function.function_name

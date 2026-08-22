@@ -162,13 +162,21 @@ variable "function_url_config" {
     buffered Invoke API and cannot invoke a streaming handler at all, producing a generic
     500 at the API Gateway layer even though the Lambda itself runs successfully.
 
-    authorized_distribution_arn scopes the CloudFront invoke permission to aws:SourceArn once
-    the distribution exists; until then, authorized_source_account is the aws:SourceAccount
-    fallback (same two-phase tightening pattern used for the nextjs-assets S3 bucket policy).
+    authorization_type = "AWS_IAM" pairs with CloudFront Origin Access Control (the
+    AWS-documented pattern) — authorized_distribution_arn scopes the invoke permission to
+    aws:SourceArn once the distribution exists, authorized_source_account is the
+    aws:SourceAccount fallback until then. In practice this combination returned a
+    persistent 403 AccessDeniedException with no clear cause (see
+    schoolsmart-terraform-47o) — authorization_type = "NONE" is the fallback: no IAM
+    permission is created at all (publicly invokable over the network, same exposure as an
+    API Gateway route's default NONE authorization_type), and access control instead relies
+    on the caller (e.g. CloudFront, via a custom origin header) and the function's own code
+    checking a shared secret.
   EOT
   type = object({
     invoke_mode                 = optional(string, "BUFFERED") # or "RESPONSE_STREAM"
-    authorized_source_account   = string
+    authorization_type          = optional(string, "AWS_IAM")  # or "NONE"
+    authorized_source_account   = optional(string, null)
     authorized_distribution_arn = optional(string, null)
   })
   default = null

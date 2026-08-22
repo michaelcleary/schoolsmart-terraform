@@ -81,3 +81,9 @@ variable "nextjs_cloudfront_distribution_arn" {
   type        = string
   default     = null
 }
+
+variable "nextjs_origin_verify_secret" {
+  description = "Shared secret CloudFront sends as a custom header to the nextjs-server Function URL origin (authorization_type = NONE, since AWS_IAM + OAC returned a persistent, unexplained 403 — see schoolsmart-terraform-47o). schoolsmart-admin's Lambda handler must check this header and reject on mismatch — until that check exists, the Function URL is invokable by anyone with its URL, same exposure as any other NONE-auth Function URL."
+  type        = string
+  sensitive   = true
+}

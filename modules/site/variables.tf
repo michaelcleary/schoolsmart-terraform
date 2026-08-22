@@ -96,3 +96,10 @@ variable "default_origin_requires_oac" {
   type        = bool
   default     = false
 }
+
+variable "default_origin_custom_headers" {
+  description = "Custom headers CloudFront sends to the default (API Gateway / Lambda Function URL) origin on every request — e.g. a shared secret a NONE-auth Lambda Function URL's own code checks, since it has no IAM-based access control of its own."
+  type        = map(string)
+  default     = {}
+  sensitive   = true
+}
