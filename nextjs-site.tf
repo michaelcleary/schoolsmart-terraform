@@ -37,14 +37,18 @@ module "nextjs_site" {
   use_www_subdomain    = false
   create_api_subdomain = false
 
-  # Invokes the Lambda's Function URL directly (Lambda response streaming — see
-  # nextjs_server_lambda.tf — isn't invokable through API Gateway at all), not the shared
-  # admin_api HTTP API used by every other lambda in this stack.
-  enable_api_gateway          = true
-  api_gateway_is_default      = true
-  api_invoke_url              = module.lambda.nextjs_server_function_url_domain
-  default_origin_requires_oac = true
-  static_asset_path_patterns  = var.nextjs_static_asset_path_patterns
+  # TRANSITIONAL (step 1 of 3, see nextjs_server_lambda.tf): still pointed at the API
+  # Gateway custom domain here — moving straight to api_invoke_url =
+  # module.lambda.nextjs_server_function_url_domain in the same apply that removes the old
+  # API Gateway route/integration/permission causes a Terraform dependency cycle (the
+  # distribution's output-reference dependency on module.lambda's "close", combined with
+  # this distribution's own resources being depended on by the api-gateway destroy
+  # ordering). Step 2 repoints this at the Function URL (while the old API Gateway wiring
+  # still exists, so nothing destroys yet); step 3 then removes the old wiring cleanly.
+  enable_api_gateway         = true
+  api_gateway_is_default     = true
+  api_invoke_url             = aws_apigatewayv2_domain_name.web_service_api_domain_name.domain_name
+  static_asset_path_patterns = var.nextjs_static_asset_path_patterns
 
   depends_on = [module.lambda]
 }

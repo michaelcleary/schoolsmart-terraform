@@ -45,6 +45,20 @@ module "nextjs_server_lambda" {
   timeout     = 30
   memory_size = 1024
 
+  # TRANSITIONAL: kept alongside function_url_config below purely to avoid a Terraform
+  # dependency cycle (nextjs-site.tf's CloudFront distribution referencing
+  # module.lambda's new function_url_domain output while these same-module resources are
+  # being destroyed, in one apply, cycles). Step 1 of 3: add the Function URL without
+  # removing this yet. Step 2: repoint nextjs-site.tf at the Function URL (this still
+  # exists so nothing destroys). Step 3: remove this block entirely (pure destroy, nothing
+  # references it any more). See nextjs-server-lambda's function_url_config comment for why
+  # the Function URL replaces this for actual traffic.
+  api_gateway_v2_config = {
+    api_id     = var.api_gateway_v2_api_id
+    route_keys = ["ANY /", "ANY /{proxy+}"]
+    payload_format_version = "2.0"
+  }
+
   # Invoked directly by CloudFront via a Function URL, not the shared admin_api HTTP API.
   # OpenNext's SSR handler is built with awslambda.streamifyResponse (Lambda response
   # streaming) — API Gateway (REST or HTTP API) always uses the standard buffered Invoke
