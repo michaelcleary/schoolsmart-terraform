@@ -64,7 +64,7 @@ resource "aws_lambda_function" "auth_refresh_lambda" {
   runtime       = "nodejs22.x"
 
   s3_bucket = var.lambda_code_bucket.bucket
-  s3_key    = "auth-refresh/20251230-123601-3b04bc925b5130022701ecff9be8b46380b95c5d.zip"
+  s3_key    = "${var.release_tag}/auth-refresh.zip"
 
   timeout = 10
   memory_size = 128

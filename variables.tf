@@ -78,10 +78,9 @@ variable "app_runner_ecr_repo_url" {
   default     = "756208870582.dkr.ecr.eu-west-2.amazonaws.com/schoolsmart-admin"
 }
 
-variable "app_runner_image_tag" {
-  description = "The tag of the Docker image to deploy"
+variable "release_tag" {
+  description = "The github sha for the release"
   type        = string
-  default     = "latest"
 }
 
 variable "app_runner_port" {
@@ -163,12 +162,6 @@ variable "create_account" {
 
 variable "email_override" {
   description = "Override email for non-production environment"
-  type        = string
-  default     = ""
-}
-
-variable "client_sha" {
-  description = "Git SHA of the client app to serve via CloudFront (must match the S3 prefix the app repo CI uploads to)"
   type        = string
   default     = ""
 }

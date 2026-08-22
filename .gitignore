@@ -1,7 +1,6 @@
 .idea
 .terraform
 node_modules
-*.tfvars
 
 # Beads / Dolt files (added by bd init)
 .dolt/
