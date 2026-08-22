@@ -37,10 +37,14 @@ module "nextjs_site" {
   use_www_subdomain    = false
   create_api_subdomain = false
 
-  enable_api_gateway         = true
-  api_gateway_is_default     = true
-  api_invoke_url             = aws_apigatewayv2_domain_name.web_service_api_domain_name.domain_name
-  static_asset_path_patterns = var.nextjs_static_asset_path_patterns
+  # Invokes the Lambda's Function URL directly (Lambda response streaming — see
+  # nextjs_server_lambda.tf — isn't invokable through API Gateway at all), not the shared
+  # admin_api HTTP API used by every other lambda in this stack.
+  enable_api_gateway          = true
+  api_gateway_is_default      = true
+  api_invoke_url              = module.lambda.nextjs_server_function_url_domain
+  default_origin_requires_oac = true
+  static_asset_path_patterns  = var.nextjs_static_asset_path_patterns
 
   depends_on = [module.lambda]
 }

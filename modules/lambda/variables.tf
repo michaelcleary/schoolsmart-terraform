@@ -153,6 +153,27 @@ variable "api_gateway_v2_config" {
   default = null
 }
 
+# Trigger Configuration - Lambda Function URL
+variable "function_url_config" {
+  description = <<-EOT
+    Create a Lambda Function URL, invoked directly by CloudFront instead of going through
+    API Gateway. Needed for handlers that use Lambda response streaming (awslambda.streamifyResponse,
+    e.g. OpenNext's SSR adapter) — API Gateway (REST or HTTP API) always uses the standard
+    buffered Invoke API and cannot invoke a streaming handler at all, producing a generic
+    500 at the API Gateway layer even though the Lambda itself runs successfully.
+
+    authorized_distribution_arn scopes the CloudFront invoke permission to aws:SourceArn once
+    the distribution exists; until then, authorized_source_account is the aws:SourceAccount
+    fallback (same two-phase tightening pattern used for the nextjs-assets S3 bucket policy).
+  EOT
+  type = object({
+    invoke_mode                 = optional(string, "BUFFERED") # or "RESPONSE_STREAM"
+    authorized_source_account   = string
+    authorized_distribution_arn = optional(string, null)
+  })
+  default = null
+}
+
 # Trigger Configuration - EventBridge
 variable "eventbridge_config" {
   description = "EventBridge (CloudWatch Events) trigger configuration"

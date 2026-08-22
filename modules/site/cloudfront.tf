@@ -25,6 +25,22 @@ resource "aws_cloudfront_origin_access_control" "s3" {
   }
 }
 
+# OAC for a Lambda Function URL default origin (see var.default_origin_requires_oac) —
+# a Function URL with AWS_IAM auth needs SigV4-signed requests, same mechanism as the S3
+# OAC above but origin_access_control_origin_type = "lambda".
+resource "aws_cloudfront_origin_access_control" "lambda_url" {
+  count                             = var.default_origin_requires_oac ? 1 : 0
+  name                              = "${var.env}-${replace(var.domain_name, ".", "-")}-lambda-oac"
+  description                       = "OAC for Lambda Function URL origin"
+  origin_access_control_origin_type = "lambda"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "aws_cloudfront_distribution" "s3_distribution" {
   count = var.enable_cloudfront ? 1 : 0
 
@@ -45,8 +61,9 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   dynamic "origin" {
     for_each = var.enable_api_gateway ? [1] : []
     content {
-      domain_name = var.api_invoke_url
-      origin_id   = "APIGatewayOrigin"
+      domain_name               = var.api_invoke_url
+      origin_id                 = "APIGatewayOrigin"
+      origin_access_control_id  = var.default_origin_requires_oac ? aws_cloudfront_origin_access_control.lambda_url[0].id : null
 
       custom_origin_config {
         http_port              = 80

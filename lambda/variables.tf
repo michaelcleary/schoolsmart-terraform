@@ -75,3 +75,9 @@ variable "nextjs_session_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "nextjs_cloudfront_distribution_arn" {
+  description = "This env's OpenNext CloudFront distribution ARN (schoolsmart-terraform-dl3/6rk), once it exists — tightens the Function URL's CloudFront invoke permission from aws:SourceAccount to aws:SourceArn. Null until the distribution exists (same nextjs_cloudfront_distribution_arns map used by the nextjs-assets S3 bucket policy)."
+  type        = string
+  default     = null
+}

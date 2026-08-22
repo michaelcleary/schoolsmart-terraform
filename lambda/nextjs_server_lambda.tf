@@ -45,12 +45,16 @@ module "nextjs_server_lambda" {
   timeout     = 30
   memory_size = 1024
 
-  api_gateway_v2_config = {
-    api_id     = var.api_gateway_v2_api_id
-    route_keys = ["ANY /", "ANY /{proxy+}"]
-    # OpenNext's Lambda adapter requires the 2.0 event shape (event.requestContext.http.method,
-    # rawPath, rawQueryString, ...) — the module's default of 1.0 caused every request to 500
-    # with "Cannot read properties of undefined (reading 'method')" in convertFrom.
-    payload_format_version = "2.0"
+  # Invoked directly by CloudFront via a Function URL, not the shared admin_api HTTP API.
+  # OpenNext's SSR handler is built with awslambda.streamifyResponse (Lambda response
+  # streaming) — API Gateway (REST or HTTP API) always uses the standard buffered Invoke
+  # API and cannot invoke a streaming handler at all, producing a generic 500 at the API
+  # Gateway layer even though the Lambda itself runs fine. (An earlier attempt routed this
+  # through admin_api with payload_format_version = "2.0", which fixed the 2.0-vs-1.0 event
+  # shape mismatch but not this deeper incompatibility — replaced by this Function URL.)
+  function_url_config = {
+    invoke_mode                 = "RESPONSE_STREAM"
+    authorized_source_account   = var.aws_account
+    authorized_distribution_arn = var.nextjs_cloudfront_distribution_arn
   }
 }

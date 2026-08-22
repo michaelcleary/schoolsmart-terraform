@@ -90,3 +90,9 @@ variable "static_asset_path_patterns" {
   type        = list(string)
   default     = []
 }
+
+variable "default_origin_requires_oac" {
+  description = "Whether the default (API Gateway / Lambda Function URL) origin needs SigV4-signed invocation via a CloudFront Origin Access Control of type 'lambda' — true for a Lambda Function URL with AWS_IAM auth (api_invoke_url pointed at the function URL's domain), false for a plain API Gateway custom origin (which doesn't use OAC)."
+  type        = bool
+  default     = false
+}

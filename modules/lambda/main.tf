@@ -219,6 +219,26 @@ resource "aws_apigatewayv2_route" "api_gateway_v2_route" {
   authorizer_id      = var.api_gateway_v2_config.authorizer_id
 }
 
+# Lambda Function URL Trigger — see var.function_url_config for why this exists
+# alongside (instead of) the API Gateway v2 trigger above.
+resource "aws_lambda_function_url" "this" {
+  count              = var.function_url_config != null ? 1 : 0
+  function_name      = aws_lambda_function.function.function_name
+  authorization_type = "AWS_IAM"
+  invoke_mode        = var.function_url_config.invoke_mode
+}
+
+resource "aws_lambda_permission" "function_url_cloudfront" {
+  count                  = var.function_url_config != null ? 1 : 0
+  statement_id           = "AllowCloudFrontInvokeFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.function.function_name
+  principal              = "cloudfront.amazonaws.com"
+  function_url_auth_type = "AWS_IAM"
+  source_arn             = var.function_url_config.authorized_distribution_arn
+  source_account         = var.function_url_config.authorized_distribution_arn == null ? var.function_url_config.authorized_source_account : null
+}
+
 # EventBridge (CloudWatch Events) Trigger
 resource "aws_cloudwatch_event_rule" "eventbridge_rule" {
   count               = var.eventbridge_config != null ? 1 : 0

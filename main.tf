@@ -180,11 +180,12 @@ module "lambda" {
   release_tag                =var.release_tag
 
   # nextjs_server_lambda.tf inputs — same Cognito client + session secret as amplify.tf
-  enable_nextjs_lambda        = var.enable_nextjs_lambda_hosting
-  api_domain_name             = var.api_domain_name
-  nextjs_cognito_user_pool_id = aws_cognito_user_pool.main.id
-  nextjs_cognito_client_id    = aws_cognito_user_pool_client.nextjs.id
-  nextjs_session_secret       = random_password.session_secret.result
+  enable_nextjs_lambda               = var.enable_nextjs_lambda_hosting
+  api_domain_name                    = var.api_domain_name
+  nextjs_cognito_user_pool_id        = aws_cognito_user_pool.main.id
+  nextjs_cognito_client_id           = aws_cognito_user_pool_client.nextjs.id
+  nextjs_session_secret              = random_password.session_secret.result
+  nextjs_cloudfront_distribution_arn = lookup(var.nextjs_cloudfront_distribution_arns, var.env, null)
 }
 
 locals {
