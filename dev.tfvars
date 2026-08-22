@@ -23,7 +23,7 @@ admin_use_www_subdomain = false
 
 email_override = "it@schoolsmart.co.uk"
 
-release_tag = "5d1864e7"
+release_tag = "00a84f01"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"
@@ -34,6 +34,11 @@ amplify_github_token_secret_name = "amplify/github-app-token"
 # OpenNext Lambda + CloudFront (schoolsmart-terraform-dl3) — temporary validation domain,
 # see nextjs-site.tf. Not the real dev-app.schoolsmart.co.uk domain until yd1 cuts over.
 nextjs_domain_name = "next-dev-app.schoolsmart.co.uk"
+
+# schoolsmart-admin's OpenNext build for release_tag is confirmed uploaded
+# (s3://schoolsmart-lambda/00a84f01/nextjs-server.zip, s3://schoolsmart-nextjs-assets/00a84f01/) —
+# see schoolsmart-terraform-6rk. Flipping this on creates the Lambda server + CloudFront dist.
+enable_nextjs_lambda_hosting = true
 
 # Shared cross-env buckets (see nextjs-assets.tf) — dev is the "owning" workspace that
 # creates them and writes their CloudFront-read bucket policies; test/prod just read
