@@ -10,7 +10,13 @@
 #
 # Reuses the same Cognito client + session secret as the (still-live) Amplify app so
 # sessions issued by either backend stay interchangeable during the dl3/yd1 transition.
+#
+# Gated behind enable_nextjs_lambda: aws_lambda_function creation fails if s3_key doesn't
+# exist yet in lambda_code_bucket, which would otherwise fail every apply to this
+# workspace (terraform apply is all-or-nothing) until schoolsmart-admin's OpenNext build
+# is actually uploading nextjs-server.zip for the release_tag in <env>.tfvars.
 module "nextjs_server_lambda" {
+  count  = var.enable_nextjs_lambda ? 1 : 0
   source = "../modules/lambda"
 
   function_name = "${var.env}-nextjs-server"

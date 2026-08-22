@@ -11,7 +11,12 @@
 # distribution claiming an alias another distribution already owns. The real domain
 # cutover (removing Amplify's alias, pointing this distribution's aliases at it instead)
 # is schoolsmart-terraform-yd1, once this has been validated end-to-end in dev.
+#
+# Gated behind the same flag as module.lambda's nextjs_server_lambda (enable_nextjs_lambda
+# via enable_nextjs_lambda_hosting) — no point standing up a distribution whose only
+# origin route (the Lambda's catch-all) doesn't exist yet.
 module "nextjs_site" {
+  count  = var.enable_nextjs_lambda_hosting ? 1 : 0
   source = "./modules/site"
 
   providers = {

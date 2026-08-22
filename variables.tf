@@ -210,6 +210,18 @@ variable "amplify_domain_prefix" {
 variable "nextjs_domain_name" {
   description = "Temporary validation domain for the OpenNext CloudFront distribution (e.g. 'next-dev-app.schoolsmart.co.uk'). Superseded by amplify_domain_prefix's domain once yd1 cuts over."
   type        = string
+  default     = ""
+}
+
+# Off by default: aws_lambda_function.function fails to create if s3_key doesn't exist
+# yet in lambda_code_bucket, which would otherwise fail *every* apply to this workspace
+# (terraform apply is all-or-nothing) until schoolsmart-admin's OpenNext build is landing
+# real nextjs-server.zip / .open-next/assets uploads for release_tag. Flip to true once
+# that's confirmed for the release_tag currently set in <env>.tfvars.
+variable "enable_nextjs_lambda_hosting" {
+  description = "Create the OpenNext Lambda server + its CloudFront distribution. Requires nextjs-server.zip to already exist at s3://<lambda_code_bucket>/<release_tag>/nextjs-server.zip."
+  type        = bool
+  default     = false
 }
 
 variable "nextjs_static_asset_path_patterns" {

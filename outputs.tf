@@ -36,13 +36,13 @@ output "nextjs_assets_bucket_name" {
 }
 
 output "nextjs_site_domain" {
-  value       = module.nextjs_site.domain_name
-  description = "Temporary validation domain for the OpenNext CloudFront distribution — see nextjs-site.tf. Not the real app domain until schoolsmart-terraform-yd1 cuts over."
+  value       = var.enable_nextjs_lambda_hosting ? module.nextjs_site[0].domain_name : null
+  description = "Temporary validation domain for the OpenNext CloudFront distribution — see nextjs-site.tf. Not the real app domain until schoolsmart-terraform-yd1 cuts over. Null until enable_nextjs_lambda_hosting is true."
 }
 
 output "nextjs_server_function_name" {
   value       = module.lambda.nextjs_server_function_name
-  description = "Name of the OpenNext Next.js server Lambda"
+  description = "Name of the OpenNext Next.js server Lambda (null until enable_nextjs_lambda_hosting is true)"
 }
 
 # App Runner outputs
