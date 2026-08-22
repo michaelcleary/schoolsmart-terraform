@@ -55,11 +55,11 @@ resource "aws_s3_bucket_public_access_block" "nextjs_assets" {
 }
 
 # Grants CloudFront OAC read access, one statement per env AWS account. Each env's
-# future CloudFront distribution (schoolsmart-terraform-dl3) lives in that env's own
-# account, so this can't yet be scoped to a specific distribution ARN — no distribution
-# exists in any env until dl3 item 3 is built. Scoping to aws:SourceAccount instead of
-# aws:SourceArn is the AWS-documented fallback for that case; tighten each statement to
-# aws:SourceArn once the corresponding env's distribution exists.
+# CloudFront distribution (schoolsmart-terraform-dl3) lives in that env's own account.
+# Scoped to aws:SourceArn once nextjs_cloudfront_distribution_arns has that env's real
+# distribution ARN (schoolsmart-terraform-6rk); envs without an entry yet (no distribution
+# exists there) fall back to the looser aws:SourceAccount condition, the AWS-documented
+# fallback for that case.
 resource "aws_s3_bucket_policy" "nextjs_assets" {
   count    = var.create_shared_buckets && length(var.env_account_ids) > 0 ? 1 : 0
   provider = aws.shared
@@ -68,18 +68,28 @@ resource "aws_s3_bucket_policy" "nextjs_assets" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      for env, account_id in var.env_account_ids : {
-        Sid       = "AllowCloudFrontRead${title(env)}"
-        Effect    = "Allow"
-        Principal = { Service = "cloudfront.amazonaws.com" }
-        Action    = "s3:GetObject"
-        Resource  = "${local.nextjs_assets_bucket_arn}/*"
-        Condition = {
-          StringEquals = {
-            "aws:SourceAccount" = account_id
+      for env, account_id in var.env_account_ids : merge(
+        {
+          Sid       = "AllowCloudFrontRead${title(env)}"
+          Effect    = "Allow"
+          Principal = { Service = "cloudfront.amazonaws.com" }
+          Action    = "s3:GetObject"
+          Resource  = "${local.nextjs_assets_bucket_arn}/*"
+        },
+        contains(keys(var.nextjs_cloudfront_distribution_arns), env) ? {
+          Condition = {
+            StringEquals = {
+              "AWS:SourceArn" = var.nextjs_cloudfront_distribution_arns[env]
+            }
+          }
+        } : {
+          Condition = {
+            StringEquals = {
+              "aws:SourceAccount" = account_id
+            }
           }
         }
-      }
+      )
     ]
   })
 

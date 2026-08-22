@@ -35,6 +35,12 @@ amplify_github_token_secret_name = "amplify/github-app-token"
 # see nextjs-site.tf. Not the real dev-app.schoolsmart.co.uk domain until yd1 cuts over.
 nextjs_domain_name = "next-dev-app.schoolsmart.co.uk"
 
+# schoolsmart-admin's OpenNext build for release_tag is confirmed uploaded
+# (s3://schoolsmart-lambda/85fcca6d/nextjs-server.zip, s3://schoolsmart-nextjs-assets/85fcca6d/) —
+# see schoolsmart-terraform-6rk/47o (85fcca6d = schoolsmart-admin PR #109's @next/env fix).
+# Flipping this on creates the Lambda server + CloudFront dist.
+enable_nextjs_lambda_hosting = true
+
 # Shared cross-env buckets (see nextjs-assets.tf) — dev is the "owning" workspace that
 # creates them and writes their CloudFront-read bucket policies; test/prod just read
 # them via a data source.
@@ -44,3 +50,10 @@ env_account_ids = {
   test = "117622437145"
   prod = "923305906880"
 }
+
+# Real dev distribution ARN goes here (schoolsmart-terraform-6rk) to tighten the
+# nextjs-assets bucket policy's dev statement from aws:SourceAccount to aws:SourceArn.
+# Left empty (falls back to aws:SourceAccount) because the previous distribution
+# (E3B1M6XIQF0RD6) was destroyed when a release_tag-only branch cut from main applied
+# with enable_nextjs_lambda_hosting defaulting false — refill once the new one exists.
+nextjs_cloudfront_distribution_arns = {}
