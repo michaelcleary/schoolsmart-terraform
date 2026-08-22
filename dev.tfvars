@@ -30,3 +30,13 @@ amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart
 amplify_branch_name              = "master"
 amplify_domain_prefix            = "dev-app"
 amplify_github_token_secret_name = "amplify/github-app-token"
+
+# Shared cross-env buckets (see nextjs-assets.tf) — dev is the "owning" workspace that
+# creates them and writes their CloudFront-read bucket policies; test/prod just read
+# them via a data source.
+create_shared_buckets = true
+env_account_ids = {
+  dev  = "099635824433"
+  test = "117622437145"
+  prod = "923305906880"
+}

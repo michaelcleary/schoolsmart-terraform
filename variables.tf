@@ -71,6 +71,19 @@ variable "admin_use_www_subdomain" {
   description = "Whether to create a www subdomain for the admin site"
 }
 
+# Shared cross-env bucket variables (see nextjs-assets.tf)
+variable "create_shared_buckets" {
+  description = "Whether this workspace owns creation of cross-env shared-services-account buckets (e.g. the Next.js static assets bucket). Set true in exactly one env's tfvars (dev) — the other workspaces reference the bucket via a data source instead of trying to create it too."
+  type        = bool
+  default     = false
+}
+
+variable "env_account_ids" {
+  description = "Map of env name -> AWS account ID. Only read by the owning workspace (create_shared_buckets = true) to scope shared-bucket CloudFront read policies to each env's account. Unused (default {}) in non-owning workspaces."
+  type        = map(string)
+  default     = {}
+}
+
 # App Runner variables
 variable "app_runner_ecr_repo_url" {
   description = "The URL of the ECR repository containing the Docker image"
