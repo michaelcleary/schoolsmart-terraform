@@ -23,7 +23,7 @@ admin_use_www_subdomain = false
 
 email_override = "it@schoolsmart.co.uk"
 
-release_tag = "85fcca6d"
+release_tag = "f2bb29c8"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"
@@ -36,8 +36,11 @@ amplify_github_token_secret_name = "amplify/github-app-token"
 nextjs_domain_name = "next-dev-app.schoolsmart.co.uk"
 
 # schoolsmart-admin's OpenNext build for release_tag is confirmed uploaded
-# (s3://schoolsmart-lambda/85fcca6d/nextjs-server.zip, s3://schoolsmart-nextjs-assets/85fcca6d/) —
-# see schoolsmart-terraform-6rk/47o (85fcca6d = schoolsmart-admin PR #109's @next/env fix).
+# (s3://schoolsmart-lambda/f2bb29c8/nextjs-server.zip, s3://schoolsmart-nextjs-assets/f2bb29c8/) —
+# see schoolsmart-terraform-6rk/47o. f2bb29c8 = schoolsmart-admin PR #109's follow-up fix:
+# the 85fcca6d build had @next/env present but with zero symlinks preserved in the zip
+# (verified via zipinfo -l); f2bb29c8's zip has the pnpm symlink chain intact
+# (apps/next/node_modules/next -> pnpm store -> @next/env), pending runtime verification.
 # Flipping this on creates the Lambda server + CloudFront dist.
 enable_nextjs_lambda_hosting = true
 
