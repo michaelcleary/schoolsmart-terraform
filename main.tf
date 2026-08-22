@@ -178,6 +178,12 @@ module "lambda" {
   shared_services_account_id = var.shared_services_account_id
   cognito_user_pool_arn      = aws_cognito_user_pool.main.arn
   release_tag                =var.release_tag
+
+  # nextjs_server_lambda.tf inputs — same Cognito client + session secret as amplify.tf
+  api_domain_name             = var.api_domain_name
+  nextjs_cognito_user_pool_id = aws_cognito_user_pool.main.id
+  nextjs_cognito_client_id    = aws_cognito_user_pool_client.nextjs.id
+  nextjs_session_secret       = random_password.session_secret.result
 }
 
 locals {

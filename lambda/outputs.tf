@@ -17,3 +17,13 @@ output "cognito_pretokengen_function_name" {
   description = "Name of the Cognito pre-token-generation Lambda"
   value       = module.cognito_pretokengen_lambda.function_name
 }
+
+output "nextjs_server_function_arn" {
+  description = "ARN of the OpenNext Next.js server Lambda"
+  value       = module.nextjs_server_lambda.function_arn
+}
+
+output "nextjs_server_function_name" {
+  description = "Name of the OpenNext Next.js server Lambda"
+  value       = module.nextjs_server_lambda.function_name
+}

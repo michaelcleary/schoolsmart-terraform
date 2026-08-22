@@ -45,3 +45,27 @@ variable "release_tag" {
   description = "The github sha for the release"
   type        = string
 }
+
+# nextjs_server_lambda.tf inputs — mirror what amplify.tf passes to modules/amplify so
+# the OpenNext server and the (still-live, during dl3/yd1 transition) Amplify app share
+# the same Cognito client and session secret.
+variable "api_domain_name" {
+  description = "The domain name for the API (used to build API_BASE_URL for the Next.js server lambda)"
+  type        = string
+}
+
+variable "nextjs_cognito_user_pool_id" {
+  description = "Cognito User Pool ID for the Next.js app"
+  type        = string
+}
+
+variable "nextjs_cognito_client_id" {
+  description = "Cognito App Client ID for the Next.js app"
+  type        = string
+}
+
+variable "nextjs_session_secret" {
+  description = "Session secret for the Next.js app (iron-session)"
+  type        = string
+  sensitive   = true
+}

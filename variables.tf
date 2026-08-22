@@ -200,3 +200,20 @@ variable "amplify_domain_prefix" {
   description = "Subdomain prefix for the NextJS app (e.g. 'app', 'dev-app', 'test-app')"
   type        = string
 }
+
+# OpenNext Lambda + CloudFront hosting (schoolsmart-terraform-dl3), running alongside
+# Amplify during the transition. Amplify's own CloudFront distribution already claims
+# "${amplify_domain_prefix}.${main_domain_name}" as an alias, and CloudFront rejects a
+# second distribution claiming an alias another distribution already owns — so this uses
+# its own temporary domain until schoolsmart-terraform-yd1 retires Amplify and cuts the
+# real domain over.
+variable "nextjs_domain_name" {
+  description = "Temporary validation domain for the OpenNext CloudFront distribution (e.g. 'next-dev-app.schoolsmart.co.uk'). Superseded by amplify_domain_prefix's domain once yd1 cuts over."
+  type        = string
+}
+
+variable "nextjs_static_asset_path_patterns" {
+  description = "CloudFront path patterns routed to the OpenNext static-assets S3 origin instead of the Lambda server origin"
+  type        = list(string)
+  default     = ["/_next/static/*", "/favicon.ico", "/robots.txt"]
+}

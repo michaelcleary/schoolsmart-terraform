@@ -35,6 +35,16 @@ output "nextjs_assets_bucket_name" {
   description = "Name of the dedicated S3 bucket for OpenNext static assets — set schoolsmart-admin's S3_NEXT_ASSETS_BUCKET CI var to this"
 }
 
+output "nextjs_site_domain" {
+  value       = module.nextjs_site.domain_name
+  description = "Temporary validation domain for the OpenNext CloudFront distribution — see nextjs-site.tf. Not the real app domain until schoolsmart-terraform-yd1 cuts over."
+}
+
+output "nextjs_server_function_name" {
+  value       = module.lambda.nextjs_server_function_name
+  description = "Name of the OpenNext Next.js server Lambda"
+}
+
 # App Runner outputs
 # output "app_runner_service_url" {
 #   value       = aws_apprunner_service.app_server.service_url

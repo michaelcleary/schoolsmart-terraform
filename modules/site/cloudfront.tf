@@ -1,6 +1,6 @@
 data "aws_s3_bucket" "static_website" {
   provider = aws.shared
-  bucket = var.website_bucket_name
+  bucket   = var.website_bucket_name
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_identity" {
@@ -22,14 +22,14 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_root_object = "index.html"
 
   origin {
-    domain_name = data.aws_s3_bucket.static_website.bucket_regional_domain_name
-    origin_id   = data.aws_s3_bucket.static_website.id
-    origin_path = var.origin_path
+    domain_name              = data.aws_s3_bucket.static_website.bucket_regional_domain_name
+    origin_id                = data.aws_s3_bucket.static_website.id
+    origin_path              = var.origin_path
     origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
 
-      # s3_origin_config {
-      #   origin_access_identity = aws_cloudfront_origin_access_identity.origin_identity.cloudfront_access_identity_path
-      # }
+    # s3_origin_config {
+    #   origin_access_identity = aws_cloudfront_origin_access_identity.origin_identity.cloudfront_access_identity_path
+    # }
   }
 
   dynamic "origin" {
@@ -48,21 +48,25 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = data.aws_s3_bucket.static_website.id
+    allowed_methods  = var.api_gateway_is_default ? ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"] : ["GET", "HEAD"]
+    cached_methods   = var.api_gateway_is_default ? ["HEAD", "GET", "OPTIONS"] : ["GET", "HEAD"]
+    target_origin_id = var.api_gateway_is_default ? "APIGatewayOrigin" : data.aws_s3_bucket.static_website.id
 
     viewer_protocol_policy = "redirect-to-https"
     forwarded_values {
-      query_string = false
+      query_string = var.api_gateway_is_default
+      headers      = var.api_gateway_is_default ? ["Authorization"] : []
       cookies {
-        forward = "none"
+        forward = var.api_gateway_is_default ? "all" : "none"
       }
     }
   }
 
+  # /auth/*, /api/* ordered behaviors assume API Gateway is the secondary origin behind
+  # a default S3 behavior (the Angular admin client pattern). Skipped when API Gateway is
+  # already the default behavior (the SSR pattern) since it already handles those paths.
   dynamic "ordered_cache_behavior" {
-    for_each = var.enable_api_gateway ? [1] : []
+    for_each = var.enable_api_gateway && !var.api_gateway_is_default ? [1] : []
     content {
       path_pattern           = "/auth/*"
       target_origin_id       = "APIGatewayOrigin"
@@ -80,7 +84,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = var.enable_api_gateway ? [1] : []
+    for_each = var.enable_api_gateway && !var.api_gateway_is_default ? [1] : []
     content {
       path_pattern           = "/api/*"
       target_origin_id       = "APIGatewayOrigin"
@@ -97,22 +101,41 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
   }
 
+  # Static asset prefixes routed to the S3 origin instead of the Lambda default behavior
+  # (SSR pattern only — see api_gateway_is_default).
+  dynamic "ordered_cache_behavior" {
+    for_each = var.api_gateway_is_default ? var.static_asset_path_patterns : []
+    content {
+      path_pattern           = ordered_cache_behavior.value
+      target_origin_id       = data.aws_s3_bucket.static_website.id
+      viewer_protocol_policy = "redirect-to-https"
+      allowed_methods        = ["GET", "HEAD"]
+      cached_methods         = ["GET", "HEAD"]
+      forwarded_values {
+        query_string = false
+        cookies {
+          forward = "none"
+        }
+      }
+    }
+  }
+
   viewer_certificate {
     acm_certificate_arn      = aws_acm_certificate.cert.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
 
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-  }
-
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
+  # SPA-style rewrite of 403/404 to /index.html only makes sense when S3 is serving a
+  # client-routed app. The SSR pattern (api_gateway_is_default) handles its own routing
+  # and error pages via the Lambda origin.
+  dynamic "custom_error_response" {
+    for_each = var.api_gateway_is_default ? [] : [403, 404]
+    content {
+      error_code         = custom_error_response.value
+      response_code      = 200
+      response_page_path = "/index.html"
+    }
   }
 
   restrictions {
