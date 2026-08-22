@@ -28,3 +28,7 @@ amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart
 amplify_branch_name              = "master"
 amplify_domain_prefix            = "app"
 amplify_github_token_secret_name = "amplify/github-app-token"
+
+# OpenNext Lambda + CloudFront (schoolsmart-terraform-dl3) — temporary validation domain,
+# see nextjs-site.tf. Not the real app.schoolsmart.co.uk domain until yd1 cuts over.
+nextjs_domain_name = "next-app.schoolsmart.co.uk"

@@ -200,3 +200,32 @@ variable "amplify_domain_prefix" {
   description = "Subdomain prefix for the NextJS app (e.g. 'app', 'dev-app', 'test-app')"
   type        = string
 }
+
+# OpenNext Lambda + CloudFront hosting (schoolsmart-terraform-dl3), running alongside
+# Amplify during the transition. Amplify's own CloudFront distribution already claims
+# "${amplify_domain_prefix}.${main_domain_name}" as an alias, and CloudFront rejects a
+# second distribution claiming an alias another distribution already owns — so this uses
+# its own temporary domain until schoolsmart-terraform-yd1 retires Amplify and cuts the
+# real domain over.
+variable "nextjs_domain_name" {
+  description = "Temporary validation domain for the OpenNext CloudFront distribution (e.g. 'next-dev-app.schoolsmart.co.uk'). Superseded by amplify_domain_prefix's domain once yd1 cuts over."
+  type        = string
+  default     = ""
+}
+
+# Off by default: aws_lambda_function.function fails to create if s3_key doesn't exist
+# yet in lambda_code_bucket, which would otherwise fail *every* apply to this workspace
+# (terraform apply is all-or-nothing) until schoolsmart-admin's OpenNext build is landing
+# real nextjs-server.zip / .open-next/assets uploads for release_tag. Flip to true once
+# that's confirmed for the release_tag currently set in <env>.tfvars.
+variable "enable_nextjs_lambda_hosting" {
+  description = "Create the OpenNext Lambda server + its CloudFront distribution. Requires nextjs-server.zip to already exist at s3://<lambda_code_bucket>/<release_tag>/nextjs-server.zip."
+  type        = bool
+  default     = false
+}
+
+variable "nextjs_static_asset_path_patterns" {
+  description = "CloudFront path patterns routed to the OpenNext static-assets S3 origin instead of the Lambda server origin"
+  type        = list(string)
+  default     = ["/_next/static/*", "/favicon.ico", "/robots.txt"]
+}

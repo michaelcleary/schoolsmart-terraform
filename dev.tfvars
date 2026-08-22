@@ -31,6 +31,10 @@ amplify_branch_name              = "master"
 amplify_domain_prefix            = "dev-app"
 amplify_github_token_secret_name = "amplify/github-app-token"
 
+# OpenNext Lambda + CloudFront (schoolsmart-terraform-dl3) — temporary validation domain,
+# see nextjs-site.tf. Not the real dev-app.schoolsmart.co.uk domain until yd1 cuts over.
+nextjs_domain_name = "next-dev-app.schoolsmart.co.uk"
+
 # Shared cross-env buckets (see nextjs-assets.tf) — dev is the "owning" workspace that
 # creates them and writes their CloudFront-read bucket policies; test/prod just read
 # them via a data source.
