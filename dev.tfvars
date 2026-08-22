@@ -49,3 +49,10 @@ env_account_ids = {
   test = "117622437145"
   prod = "923305906880"
 }
+
+# Real dev distribution ARN now exists (schoolsmart-terraform-6rk) — tightens the
+# nextjs-assets bucket policy's dev statement from aws:SourceAccount to aws:SourceArn.
+# test/prod stay on the aws:SourceAccount fallback until their distributions exist.
+nextjs_cloudfront_distribution_arns = {
+  dev = "arn:aws:cloudfront::099635824433:distribution/E3B1M6XIQF0RD6"
+}
