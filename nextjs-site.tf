@@ -46,9 +46,8 @@ module "nextjs_site" {
   api_gateway_is_default     = true
   api_invoke_url             = module.lambda.nextjs_server_function_url_domain
   static_asset_path_patterns = var.nextjs_static_asset_path_patterns
-  default_origin_custom_headers = {
-    "X-Origin-Verify" = random_password.nextjs_origin_verify_secret.result
-  }
+  default_origin_verify_header_name  = "X-Origin-Verify"
+  default_origin_verify_header_value = random_password.nextjs_origin_verify_secret.result
 
   # No explicit depends_on: api_invoke_url's reference to module.lambda's output already
   # creates a precise dependency edge.

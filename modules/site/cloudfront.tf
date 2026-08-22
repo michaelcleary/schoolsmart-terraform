@@ -66,14 +66,12 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       origin_access_control_id  = var.default_origin_requires_oac ? aws_cloudfront_origin_access_control.lambda_url[0].id : null
 
       dynamic "custom_header" {
-        # Terraform 1.9 (pinned in CI) rejects a strictly-typed map(string) variable
-        # passed directly as a dynamic block's for_each ("Cannot use a map of string value
-        # in for_each"), even though 1.10+ accepts it fine. Re-building it as a generic map
-        # expression works on both.
-        for_each = { for k, v in var.default_origin_custom_headers : k => v }
+        # for_each iterates a fixed, non-sensitive [1]/[] literal — never the sensitive
+        # header value itself — see default_origin_verify_header_value's description for why.
+        for_each = var.default_origin_verify_header_name != null ? [1] : []
         content {
-          name  = custom_header.key
-          value = custom_header.value
+          name  = var.default_origin_verify_header_name
+          value = var.default_origin_verify_header_value
         }
       }
 
