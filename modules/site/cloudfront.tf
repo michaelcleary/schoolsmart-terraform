@@ -82,7 +82,12 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     viewer_protocol_policy = "redirect-to-https"
     forwarded_values {
       query_string = var.api_gateway_is_default
-      headers      = var.api_gateway_is_default ? ["Authorization"] : []
+      # Forwarding the viewer's own Authorization header conflicts with an OAC'd origin
+      # (Lambda Function URL): CloudFront injects its own SigV4-signed Authorization header
+      # at the origin-request stage, and forwarding the viewer's here overwrites/corrupts
+      # it, causing a 403 straight from the Function URL's auth layer before Lambda ever
+      # runs. Only forward it for the plain-API-Gateway case, which doesn't use OAC.
+      headers      = (var.api_gateway_is_default && !var.default_origin_requires_oac) ? ["Authorization"] : []
       cookies {
         forward = var.api_gateway_is_default ? "all" : "none"
       }
