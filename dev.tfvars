@@ -54,9 +54,12 @@ env_account_ids = {
   prod = "923305906880"
 }
 
-# Real dev distribution ARN goes here (schoolsmart-terraform-6rk) to tighten the
-# nextjs-assets bucket policy's dev statement from aws:SourceAccount to aws:SourceArn.
-# Left empty (falls back to aws:SourceAccount) because the previous distribution
-# (E3B1M6XIQF0RD6) was destroyed when a release_tag-only branch cut from main applied
-# with enable_nextjs_lambda_hosting defaulting false — refill once the new one exists.
-nextjs_cloudfront_distribution_arns = {}
+# Real dev distribution (E1KEKMZM48OM5O) exists again — tightens both the nextjs-assets
+# bucket policy AND the Function URL's CloudFront invoke permission from aws:SourceAccount
+# to aws:SourceArn. Also testing a hypothesis: the Function URL is currently returning 403
+# AccessDeniedException on every CloudFront request despite OAC + resource policy looking
+# correct — SourceArn may be a hard requirement for CloudFront-OAC-to-Lambda-Function-URL
+# (unlike S3, where SourceAccount is documented as a valid interim fallback).
+nextjs_cloudfront_distribution_arns = {
+  dev = "arn:aws:cloudfront::099635824433:distribution/E1KEKMZM48OM5O"
+}
