@@ -144,6 +144,11 @@ variable "api_gateway_v2_config" {
     route_keys  = list(string)  # List of route keys like ["POST /submit", "GET /submit"]
     authorization_type = optional(string, "NONE")
     authorizer_id      = optional(string, null)
+    # AWS defaults AWS_PROXY integrations to 1.0 (the classic {httpMethod, path, ...}
+    # event shape) when unset. Defaulted here to match that existing behavior for every
+    # lambda already wired through this module; OpenNext's Lambda adapter requires 2.0
+    # (event.requestContext.http.method etc) — see nextjs_server_lambda's override.
+    payload_format_version = optional(string, "1.0")
   })
   default = null
 }

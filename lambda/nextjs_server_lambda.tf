@@ -48,5 +48,9 @@ module "nextjs_server_lambda" {
   api_gateway_v2_config = {
     api_id     = var.api_gateway_v2_api_id
     route_keys = ["ANY /", "ANY /{proxy+}"]
+    # OpenNext's Lambda adapter requires the 2.0 event shape (event.requestContext.http.method,
+    # rawPath, rawQueryString, ...) — the module's default of 1.0 caused every request to 500
+    # with "Cannot read properties of undefined (reading 'method')" in convertFrom.
+    payload_format_version = "2.0"
   }
 }

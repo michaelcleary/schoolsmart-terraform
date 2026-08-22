@@ -207,6 +207,7 @@ resource "aws_apigatewayv2_integration" "api_gateway_v2_integration" {
   integration_type = "AWS_PROXY"
   integration_uri  = aws_lambda_function.function.invoke_arn
   integration_method = "POST"
+  payload_format_version = var.api_gateway_v2_config.payload_format_version
 }
 
 resource "aws_apigatewayv2_route" "api_gateway_v2_route" {
