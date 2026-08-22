@@ -69,6 +69,18 @@ jobs:
             -no-color \
             2>&1 | tee plan.txt
 
+      # `data.archive_file` (modules/lambda) zips local lambda source into
+      # modules/lambda/.terraform/lambda_packages/ as a side effect of planning.
+      # That's a local file on this runner's disk — it isn't captured in tfplan
+      # itself, and the apply job runs on a separate runner, so without carrying
+      # this forward `terraform apply` fails later with "no such file or
+      # directory" trying to read the zip to upload it.
+      - name: Package local lambda source zips
+        run: |
+          if [ -d modules/lambda/.terraform/lambda_packages ]; then
+            tar -czf lambda_packages.tar.gz -C modules/lambda/.terraform lambda_packages
+          fi
+
       - name: Post plan to job summary
         if: always()
         run: |
@@ -86,6 +98,8 @@ jobs:
           path: |
             tfplan
             plan.txt
+            lambda_packages.tar.gz
+          if-no-files-found: ignore
           retention-days: 5
 
   apply:
@@ -116,6 +130,16 @@ jobs:
 
       - name: Terraform Workspace
         run: terraform workspace select ${{ needs.plan.outputs.environment }}
+
+      # Restore the local lambda source zips the plan job built (see "Package
+      # local lambda source zips" in the plan job) — tfplan references them by
+      # path, but the actual file only exists if we put it back here too.
+      - name: Restore local lambda source zips
+        run: |
+          if [ -f lambda_packages.tar.gz ]; then
+            mkdir -p modules/lambda/.terraform
+            tar -xzf lambda_packages.tar.gz -C modules/lambda/.terraform
+          fi
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan

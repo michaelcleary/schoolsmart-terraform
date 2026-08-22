@@ -30,6 +30,11 @@ output "admin_site_domain" {
   description = "The admin site domain name"
 }
 
+output "nextjs_assets_bucket_name" {
+  value       = local.nextjs_assets_bucket_name
+  description = "Name of the dedicated S3 bucket for OpenNext static assets — set schoolsmart-admin's S3_NEXT_ASSETS_BUCKET CI var to this"
+}
+
 # App Runner outputs
 # output "app_runner_service_url" {
 #   value       = aws_apprunner_service.app_server.service_url
