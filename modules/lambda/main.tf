@@ -259,6 +259,24 @@ resource "aws_lambda_permission" "function_url_public" {
   function_url_auth_type = "NONE"
 }
 
+# The statement above is not sufficient on its own: since October 2025 AWS also requires a
+# second resource-policy statement granting lambda:InvokeFunction (not InvokeFunctionUrl),
+# scoped to function-URL calls only via invoked_via_function_url. Without it, every request —
+# including a direct curl to the Function URL with no CloudFront/OAC/header involved — gets a
+# generic 403 "Forbidden" from the Function URL's own auth layer, indistinguishable from an
+# AWS_IAM misconfiguration (see schoolsmart-terraform-2b7). The AWS Console/newer aws provider
+# versions add this automatically when authorization_type = "NONE"; the API (and this module's
+# provider version at the time this was written) does not. Requires aws provider >= 6.28.0 for
+# the invoked_via_function_url argument.
+resource "aws_lambda_permission" "function_url_invoke_via_url" {
+  count                    = var.function_url_config == null ? 0 : (var.function_url_config.authorization_type == "NONE" ? 1 : 0)
+  statement_id             = "AllowInvokeFunctionViaFunctionUrl"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.function.function_name
+  principal                = "*"
+  invoked_via_function_url = true
+}
+
 # EventBridge (CloudWatch Events) Trigger
 resource "aws_cloudwatch_event_rule" "eventbridge_rule" {
   count               = var.eventbridge_config != null ? 1 : 0
