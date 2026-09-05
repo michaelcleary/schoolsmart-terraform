@@ -21,7 +21,10 @@ admin_enable_route53    = true
 admin_create_hosted_zone = false
 admin_use_www_subdomain = false
 
-release_tag = "17b54ad24cf563852b9b585c3c13e21e6d6ce2ac"
+# schoolsmart-terraform-kkx: bumped to match dev's current release_tag so prod picks up
+# the same App Runner image + admin_site static assets dev is running, alongside enabling
+# OpenNext Lambda hosting below (test skipped — going straight dev -> prod for this rollout).
+release_tag = "ef3c4727"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"
@@ -32,3 +35,12 @@ amplify_github_token_secret_name = "amplify/github-app-token"
 # OpenNext Lambda + CloudFront (schoolsmart-terraform-dl3) — temporary validation domain,
 # see nextjs-site.tf. Not the real app.schoolsmart.co.uk domain until yd1 cuts over.
 nextjs_domain_name = "next-app.schoolsmart.co.uk"
+
+# schoolsmart-terraform-kkx: schoolsmart-admin's OpenNext build for release_tag=ef3c4727 is
+# already confirmed uploaded to the shared schoolsmart-lambda / schoolsmart-nextjs-assets
+# buckets (same shared buckets dev reads/writes — see nextjs-assets.tf), so it's safe to flip
+# this on for prod without a separate artifact upload step. Creates the Lambda server + prod's
+# own CloudFront distribution on the temporary nextjs_domain_name above; retire_amplify stays
+# false here until this is verified end-to-end (bare '/' redirect, SSR render, S3 static asset,
+# Cognito login) — the real domain cutover is a separate follow-up, same as dev's yd1.
+enable_nextjs_lambda_hosting = true
