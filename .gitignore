@@ -1,8 +1,25 @@
 .idea
 .terraform
 node_modules
+.DS_Store
 
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db
 .beads-credential-key
+
+# Local secrets / credentials — never commit
+auth.json
+*.pem
+*.pfx
+
+# Local terraform state/config backups — the S3 backend (backend.tf) is the
+# source of truth; ad-hoc local backups may contain plaintext secrets.
+terraform-state-backup*.json
+terraform-config-backup*.tar.gz
+
+# Stray installers/binaries
+*.pkg
+
+# Customer data must never live in this repo
+invoices/
