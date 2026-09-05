@@ -144,6 +144,40 @@ variable "api_gateway_v2_config" {
     route_keys  = list(string)  # List of route keys like ["POST /submit", "GET /submit"]
     authorization_type = optional(string, "NONE")
     authorizer_id      = optional(string, null)
+    # AWS defaults AWS_PROXY integrations to 1.0 (the classic {httpMethod, path, ...}
+    # event shape) when unset. Defaulted here to match that existing behavior for every
+    # lambda already wired through this module; OpenNext's Lambda adapter requires 2.0
+    # (event.requestContext.http.method etc) — see nextjs_server_lambda's override.
+    payload_format_version = optional(string, "1.0")
+  })
+  default = null
+}
+
+# Trigger Configuration - Lambda Function URL
+variable "function_url_config" {
+  description = <<-EOT
+    Create a Lambda Function URL, invoked directly by CloudFront instead of going through
+    API Gateway. Needed for handlers that use Lambda response streaming (awslambda.streamifyResponse,
+    e.g. OpenNext's SSR adapter) — API Gateway (REST or HTTP API) always uses the standard
+    buffered Invoke API and cannot invoke a streaming handler at all, producing a generic
+    500 at the API Gateway layer even though the Lambda itself runs successfully.
+
+    authorization_type = "AWS_IAM" pairs with CloudFront Origin Access Control (the
+    AWS-documented pattern) — authorized_distribution_arn scopes the invoke permission to
+    aws:SourceArn once the distribution exists, authorized_source_account is the
+    aws:SourceAccount fallback until then. In practice this combination returned a
+    persistent 403 AccessDeniedException with no clear cause (see
+    schoolsmart-terraform-47o) — authorization_type = "NONE" is the fallback: no IAM
+    permission is created at all (publicly invokable over the network, same exposure as an
+    API Gateway route's default NONE authorization_type), and access control instead relies
+    on the caller (e.g. CloudFront, via a custom origin header) and the function's own code
+    checking a shared secret.
+  EOT
+  type = object({
+    invoke_mode                 = optional(string, "BUFFERED") # or "RESPONSE_STREAM"
+    authorization_type          = optional(string, "AWS_IAM")  # or "NONE"
+    authorized_source_account   = optional(string, null)
+    authorized_distribution_arn = optional(string, null)
   })
   default = null
 }

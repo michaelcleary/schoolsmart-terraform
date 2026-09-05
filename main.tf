@@ -116,6 +116,19 @@ resource "random_password" "session_secret" {
   special = false
 }
 
+# CloudFront -> nextjs-server Lambda Function URL origin-verify secret. The Function URL's
+# AWS_IAM auth type + CloudFront Origin Access Control (the AWS-documented pattern) returns
+# a persistent 403 AccessDeniedException on every request despite correctly-configured OAC,
+# resource policy, and origin — see schoolsmart-terraform-47o notes for what was ruled out.
+# Falling back to the simpler, well-documented pattern instead: NONE auth (publicly
+# invokable, same exposure as the API Gateway route's default NONE authorization_type it
+# replaces) + CloudFront injects this secret as a custom origin header, which
+# schoolsmart-admin's Lambda handler must check and reject on mismatch.
+resource "random_password" "nextjs_origin_verify_secret" {
+  length  = 32
+  special = false
+}
+
 # Deploy the main site
 # module "main_site" {
 #   source = "./modules/site"
@@ -180,11 +193,13 @@ module "lambda" {
   release_tag                =var.release_tag
 
   # nextjs_server_lambda.tf inputs — same Cognito client + session secret as amplify.tf
-  enable_nextjs_lambda        = var.enable_nextjs_lambda_hosting
-  api_domain_name             = var.api_domain_name
-  nextjs_cognito_user_pool_id = aws_cognito_user_pool.main.id
-  nextjs_cognito_client_id    = aws_cognito_user_pool_client.nextjs.id
-  nextjs_session_secret       = random_password.session_secret.result
+  enable_nextjs_lambda               = var.enable_nextjs_lambda_hosting
+  api_domain_name                    = var.api_domain_name
+  nextjs_cognito_user_pool_id        = aws_cognito_user_pool.main.id
+  nextjs_cognito_client_id           = aws_cognito_user_pool_client.nextjs.id
+  nextjs_session_secret              = random_password.session_secret.result
+  nextjs_cloudfront_distribution_arn = lookup(var.nextjs_cloudfront_distribution_arns, var.env, null)
+  nextjs_origin_verify_secret         = random_password.nextjs_origin_verify_secret.result
 }
 
 locals {

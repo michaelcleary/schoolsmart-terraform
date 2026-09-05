@@ -75,3 +75,15 @@ variable "nextjs_session_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "nextjs_cloudfront_distribution_arn" {
+  description = "This env's OpenNext CloudFront distribution ARN (schoolsmart-terraform-dl3/6rk), once it exists — tightens the Function URL's CloudFront invoke permission from aws:SourceAccount to aws:SourceArn. Null until the distribution exists (same nextjs_cloudfront_distribution_arns map used by the nextjs-assets S3 bucket policy)."
+  type        = string
+  default     = null
+}
+
+variable "nextjs_origin_verify_secret" {
+  description = "Shared secret CloudFront sends as a custom header to the nextjs-server Function URL origin (authorization_type = NONE, since AWS_IAM + OAC returned a persistent, unexplained 403 — see schoolsmart-terraform-47o). schoolsmart-admin's Lambda handler must check this header and reject on mismatch — until that check exists, the Function URL is invokable by anyone with its URL, same exposure as any other NONE-auth Function URL."
+  type        = string
+  sensitive   = true
+}

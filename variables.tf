@@ -84,6 +84,12 @@ variable "env_account_ids" {
   default     = {}
 }
 
+variable "nextjs_cloudfront_distribution_arns" {
+  description = "Map of env name -> that env's OpenNext CloudFront distribution ARN (schoolsmart-terraform-dl3/6rk), once it exists. Only read by the owning workspace (create_shared_buckets = true) to scope the nextjs-assets bucket policy to aws:SourceArn for that env. Envs with no entry here fall back to the looser aws:SourceAccount condition."
+  type        = map(string)
+  default     = {}
+}
+
 # App Runner variables
 variable "app_runner_ecr_repo_url" {
   description = "The URL of the ECR repository containing the Docker image"

@@ -90,3 +90,22 @@ variable "static_asset_path_patterns" {
   type        = list(string)
   default     = []
 }
+
+variable "default_origin_requires_oac" {
+  description = "Whether the default (API Gateway / Lambda Function URL) origin needs SigV4-signed invocation via a CloudFront Origin Access Control of type 'lambda' — true for a Lambda Function URL with AWS_IAM auth (api_invoke_url pointed at the function URL's domain), false for a plain API Gateway custom origin (which doesn't use OAC)."
+  type        = bool
+  default     = false
+}
+
+variable "default_origin_verify_header_name" {
+  description = "Name of a single custom header CloudFront sends to the default (API Gateway / Lambda Function URL) origin on every request — e.g. a shared secret a NONE-auth Lambda Function URL's own code checks, since it has no IAM-based access control of its own. Null skips sending one."
+  type        = string
+  default     = null
+}
+
+variable "default_origin_verify_header_value" {
+  description = "Value of default_origin_verify_header_name. Deliberately a single name/value pair (not a map/list of headers): Terraform 1.9 (pinned in CI) rejects for_each over ANY sensitive-tainted collection regardless of its type (map, object, and list all hit \"Cannot use a <type> value in for_each\" — the error names the resolved type, not the real cause). Iterating over a fixed [1]/[] literal instead and referencing this sensitive value only inside the dynamic block's content sidesteps that entirely."
+  type        = string
+  default     = null
+  sensitive   = true
+}

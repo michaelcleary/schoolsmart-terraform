@@ -47,3 +47,8 @@ output "eventbridge_rule_arn" {
   description = "ARN of the EventBridge rule (if created)"
   value       = var.eventbridge_config != null ? aws_cloudwatch_event_rule.eventbridge_rule[0].arn : null
 }
+
+output "function_url_domain" {
+  description = "Host (no scheme/trailing slash) of the Lambda Function URL, for use as a CloudFront custom-origin domain_name. Null unless function_url_config is set."
+  value       = var.function_url_config != null ? trimsuffix(replace(aws_lambda_function_url.this[0].function_url, "https://", ""), "/") : null
+}

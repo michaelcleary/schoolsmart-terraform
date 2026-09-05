@@ -8,18 +8,54 @@ resource "aws_cloudfront_origin_access_identity" "origin_identity" {
 }
 
 resource "aws_cloudfront_origin_access_control" "s3" {
-  name                              = "${var.env}-s3-oac"
+  # OAC names must be unique per account. env alone isn't a unique key once more than one
+  # modules/site instance shares an env (admin_site, nextjs_site, ...), so key off
+  # domain_name too, same as this module's aliases/cert/tags already do.
+  name                              = "${var.env}-${replace(var.domain_name, ".", "-")}-s3-oac"
   description                       = "OAC for S3 bucket in shared services"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
+
+  # Renaming forces replacement; create the new OAC and let the distribution update to
+  # reference it before the old one is destroyed, so a live distribution is never left
+  # pointing at a deleted OAC mid-apply.
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# OAC for a Lambda Function URL default origin (see var.default_origin_requires_oac) —
+# a Function URL with AWS_IAM auth needs SigV4-signed requests, same mechanism as the S3
+# OAC above but origin_access_control_origin_type = "lambda".
+resource "aws_cloudfront_origin_access_control" "lambda_url" {
+  count                             = var.default_origin_requires_oac ? 1 : 0
+  name                              = "${var.env}-${replace(var.domain_name, ".", "-")}-lambda-oac"
+  description                       = "OAC for Lambda Function URL origin"
+  origin_access_control_origin_type = "lambda"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   count = var.enable_cloudfront ? 1 : 0
 
-  enabled             = true
-  default_root_object = "index.html"
+  enabled = true
+
+  # For the SPA pattern (S3 default origin), "/" needs rewriting to the real S3 object.
+  # For the SSR pattern (api_gateway_is_default), "/" must reach the Lambda default
+  # behavior unchanged -- Next.js's own router handles the root route (e.g. apps/next's
+  # "/" page.tsx). A non-empty default_root_object makes CloudFront rewrite every bare
+  # "/" request to "/index.html" *before* choosing a cache behavior, regardless of which
+  # origin ends up serving it -- there is no such Next.js route, so the Lambda rendered
+  # _not-found for every real "/" request while every other path worked fine
+  # (schoolsmart-terraform-0ov): CloudFront returned 404 for "/" while a direct Function
+  # URL request to the same path correctly rendered/redirected.
+  default_root_object = var.api_gateway_is_default ? "" : "index.html"
 
   origin {
     domain_name              = data.aws_s3_bucket.static_website.bucket_regional_domain_name
@@ -35,8 +71,19 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   dynamic "origin" {
     for_each = var.enable_api_gateway ? [1] : []
     content {
-      domain_name = var.api_invoke_url
-      origin_id   = "APIGatewayOrigin"
+      domain_name               = var.api_invoke_url
+      origin_id                 = "APIGatewayOrigin"
+      origin_access_control_id  = var.default_origin_requires_oac ? aws_cloudfront_origin_access_control.lambda_url[0].id : null
+
+      dynamic "custom_header" {
+        # for_each iterates a fixed, non-sensitive [1]/[] literal — never the sensitive
+        # header value itself — see default_origin_verify_header_value's description for why.
+        for_each = var.default_origin_verify_header_name != null ? [1] : []
+        content {
+          name  = var.default_origin_verify_header_name
+          value = var.default_origin_verify_header_value
+        }
+      }
 
       custom_origin_config {
         http_port              = 80
@@ -55,7 +102,12 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     viewer_protocol_policy = "redirect-to-https"
     forwarded_values {
       query_string = var.api_gateway_is_default
-      headers      = var.api_gateway_is_default ? ["Authorization"] : []
+      # Forwarding the viewer's own Authorization header conflicts with an OAC'd origin
+      # (Lambda Function URL): CloudFront injects its own SigV4-signed Authorization header
+      # at the origin-request stage, and forwarding the viewer's here overwrites/corrupts
+      # it, causing a 403 straight from the Function URL's auth layer before Lambda ever
+      # runs. Only forward it for the plain-API-Gateway case, which doesn't use OAC.
+      headers      = (var.api_gateway_is_default && !var.default_origin_requires_oac) ? ["Authorization"] : []
       cookies {
         forward = var.api_gateway_is_default ? "all" : "none"
       }

@@ -207,6 +207,7 @@ resource "aws_apigatewayv2_integration" "api_gateway_v2_integration" {
   integration_type = "AWS_PROXY"
   integration_uri  = aws_lambda_function.function.invoke_arn
   integration_method = "POST"
+  payload_format_version = var.api_gateway_v2_config.payload_format_version
 }
 
 resource "aws_apigatewayv2_route" "api_gateway_v2_route" {
@@ -216,6 +217,64 @@ resource "aws_apigatewayv2_route" "api_gateway_v2_route" {
   target             = "integrations/${aws_apigatewayv2_integration.api_gateway_v2_integration[0].id}"
   authorization_type = var.api_gateway_v2_config.authorization_type
   authorizer_id      = var.api_gateway_v2_config.authorizer_id
+}
+
+# Lambda Function URL Trigger — see var.function_url_config for why this exists
+# alongside (instead of) the API Gateway v2 trigger above.
+resource "aws_lambda_function_url" "this" {
+  count              = var.function_url_config != null ? 1 : 0
+  function_name      = aws_lambda_function.function.function_name
+  authorization_type = var.function_url_config.authorization_type
+  invoke_mode        = var.function_url_config.invoke_mode
+}
+
+resource "aws_lambda_permission" "function_url_cloudfront" {
+  # && doesn't short-circuit in HCL — var.function_url_config.authorization_type would still
+  # get evaluated (and error on a null function_url_config) even when the first operand is
+  # false, for every other lambda using this module that doesn't set function_url_config.
+  count = var.function_url_config == null ? 0 : (var.function_url_config.authorization_type == "AWS_IAM" ? 1 : 0)
+  statement_id           = "AllowCloudFrontInvokeFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.function.function_name
+  principal              = "cloudfront.amazonaws.com"
+  function_url_auth_type = "AWS_IAM"
+  source_arn             = var.function_url_config.authorized_distribution_arn
+  source_account         = var.function_url_config.authorized_distribution_arn == null ? var.function_url_config.authorized_source_account : null
+}
+
+# authorization_type = "NONE" does NOT itself grant public access when the Function URL is
+# created via Terraform/the API (unlike the AWS Console, which adds this resource policy
+# statement for you automatically) — without an explicit Allow, IAM/resource policies
+# default-deny and every request gets a generic 403 "Forbidden" from the Function URL's own
+# auth layer, indistinguishable from an AWS_IAM misconfiguration. This is what that statement
+# looks like for "NONE": anyone can invoke, matching the actual security model (access
+# control is the caller's job — e.g. CloudFront sending a shared-secret header the function's
+# own code checks — not IAM's).
+resource "aws_lambda_permission" "function_url_public" {
+  count                  = var.function_url_config == null ? 0 : (var.function_url_config.authorization_type == "NONE" ? 1 : 0)
+  statement_id           = "AllowPublicInvokeFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.function.function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
+}
+
+# The statement above is not sufficient on its own: since October 2025 AWS also requires a
+# second resource-policy statement granting lambda:InvokeFunction (not InvokeFunctionUrl),
+# scoped to function-URL calls only via invoked_via_function_url. Without it, every request —
+# including a direct curl to the Function URL with no CloudFront/OAC/header involved — gets a
+# generic 403 "Forbidden" from the Function URL's own auth layer, indistinguishable from an
+# AWS_IAM misconfiguration (see schoolsmart-terraform-2b7). The AWS Console/newer aws provider
+# versions add this automatically when authorization_type = "NONE"; the API (and this module's
+# provider version at the time this was written) does not. Requires aws provider >= 6.28.0 for
+# the invoked_via_function_url argument.
+resource "aws_lambda_permission" "function_url_invoke_via_url" {
+  count                    = var.function_url_config == null ? 0 : (var.function_url_config.authorization_type == "NONE" ? 1 : 0)
+  statement_id             = "AllowInvokeFunctionViaFunctionUrl"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.function.function_name
+  principal                = "*"
+  invoked_via_function_url = true
 }
 
 # EventBridge (CloudWatch Events) Trigger

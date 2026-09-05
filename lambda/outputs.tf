@@ -27,3 +27,8 @@ output "nextjs_server_function_name" {
   description = "Name of the OpenNext Next.js server Lambda (null if enable_nextjs_lambda is false)"
   value       = var.enable_nextjs_lambda ? module.nextjs_server_lambda[0].function_name : null
 }
+
+output "nextjs_server_function_url_domain" {
+  description = "Host of the OpenNext Next.js server Lambda's Function URL, for use as a CloudFront custom-origin domain_name (null if enable_nextjs_lambda is false)"
+  value       = var.enable_nextjs_lambda ? module.nextjs_server_lambda[0].function_url_domain : null
+}

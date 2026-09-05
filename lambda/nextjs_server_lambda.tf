@@ -33,6 +33,11 @@ module "nextjs_server_lambda" {
     COGNITO_USER_POOL_ID = var.nextjs_cognito_user_pool_id
     COGNITO_CLIENT_ID    = var.nextjs_cognito_client_id
     COGNITO_REGION       = var.aws_region
+    # Checked against the X-Origin-Verify header CloudFront sends on every request (see
+    # nextjs-site.tf's default_origin_custom_headers) — the Function URL itself has no
+    # IAM-based access control (authorization_type = NONE, see function_url_config below),
+    # so schoolsmart-admin's handler must reject any request without a matching header.
+    ORIGIN_VERIFY_SECRET = var.nextjs_origin_verify_secret
   }
 
   # Zip deployed to S3 by the schoolsmart-admin CI/CD pipeline.
@@ -45,8 +50,21 @@ module "nextjs_server_lambda" {
   timeout     = 30
   memory_size = 1024
 
-  api_gateway_v2_config = {
-    api_id     = var.api_gateway_v2_api_id
-    route_keys = ["ANY /", "ANY /{proxy+}"]
+  # Invoked directly by CloudFront via a Function URL, not the shared admin_api HTTP API.
+  # OpenNext's SSR handler is built with awslambda.streamifyResponse (Lambda response
+  # streaming) — API Gateway (REST or HTTP API) always uses the standard buffered Invoke
+  # API and cannot invoke a streaming handler at all, producing a generic 500 at the API
+  # Gateway layer even though the Lambda itself runs fine.
+  #
+  # authorization_type = NONE, not the AWS-documented AWS_IAM + CloudFront Origin Access
+  # Control pattern: that combination returned a persistent 403 AccessDeniedException on
+  # every request despite a correctly-configured OAC, resource policy (SourceArn-scoped),
+  # and origin — see schoolsmart-terraform-47o for what was ruled out. Falls back to NONE
+  # auth (publicly invokable, same network exposure as the API Gateway route's default NONE
+  # authorization_type it replaces) + a shared secret CloudFront sends as a custom origin
+  # header (nextjs-site.tf), which schoolsmart-admin's handler must check.
+  function_url_config = {
+    invoke_mode         = "RESPONSE_STREAM"
+    authorization_type  = "NONE"
   }
 }
