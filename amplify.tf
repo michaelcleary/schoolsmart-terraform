@@ -6,6 +6,18 @@ locals {
   }
 }
 
+# schoolsmart-terraform-kkx: this module gained `count` here with no `moved` block, which
+# destroyed prod's Amplify app on its first apply after that change — Terraform read the
+# address change from `module.amplify.*` (this workspace's pre-existing state, from before
+# `count` was added) to `module.amplify[0].*` as destroy-then-create instead of a rename, and
+# the create lost the race against its own resource names being deleted. This is a no-op for
+# any workspace whose state doesn't have the old unindexed address (there is currently no
+# `test` env/workspace at all), but protects any that do.
+moved {
+  from = module.amplify
+  to   = module.amplify[0]
+}
+
 module "amplify" {
   count  = var.retire_amplify ? 0 : 1
   source = "./modules/amplify"
