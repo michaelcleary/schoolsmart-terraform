@@ -66,5 +66,9 @@ env_account_ids = {
 # correct — SourceArn may be a hard requirement for CloudFront-OAC-to-Lambda-Function-URL
 # (unlike S3, where SourceAccount is documented as a valid interim fallback).
 nextjs_cloudfront_distribution_arns = {
-  dev = "arn:aws:cloudfront::099635824433:distribution/E1KEKMZM48OM5O"
+  dev  = "arn:aws:cloudfront::099635824433:distribution/E1KEKMZM48OM5O"
+  # schoolsmart-terraform-kkx: prod's real OpenNext distribution (created when prod cut over
+  # to it after the Amplify incident) — tightens the shared nextjs-assets bucket policy's
+  # prod statement from aws:SourceAccount to aws:SourceArn.
+  prod = "arn:aws:cloudfront::923305906880:distribution/EJQ952L3GQXG2"
 }

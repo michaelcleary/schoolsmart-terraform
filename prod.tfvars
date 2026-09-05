@@ -64,3 +64,13 @@ enable_nextjs_lambda_hosting = true
 # domain. Verify immediately after apply: bare '/' redirect, SSR render, S3 static asset,
 # Cognito login.
 retire_amplify = true
+
+# schoolsmart-terraform-kkx: prod's real distribution now exists (confirmed end-to-end after
+# the Amplify cutover above) — tightens the nextjs-server Lambda Function URL's CloudFront
+# invoke permission from aws:SourceAccount to aws:SourceArn (see main.tf's lookup(...) into
+# module.lambda). The matching entry also needs adding to dev.tfvars's
+# nextjs_cloudfront_distribution_arns to tighten the shared nextjs-assets bucket policy — dev
+# is the owning workspace for that resource.
+nextjs_cloudfront_distribution_arns = {
+  prod = "arn:aws:cloudfront::923305906880:distribution/EJQ952L3GQXG2"
+}
