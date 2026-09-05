@@ -24,7 +24,7 @@ admin_use_www_subdomain = false
 # schoolsmart-terraform-kkx: bumped to match dev's current release_tag so prod picks up
 # the same App Runner image + admin_site static assets dev is running, alongside enabling
 # OpenNext Lambda hosting below (test skipped — going straight dev -> prod for this rollout).
-release_tag = "ef3c4727"
+release_tag = "f39246e1"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"
