@@ -44,8 +44,18 @@ resource "aws_cloudfront_origin_access_control" "lambda_url" {
 resource "aws_cloudfront_distribution" "s3_distribution" {
   count = var.enable_cloudfront ? 1 : 0
 
-  enabled             = true
-  default_root_object = "index.html"
+  enabled = true
+
+  # For the SPA pattern (S3 default origin), "/" needs rewriting to the real S3 object.
+  # For the SSR pattern (api_gateway_is_default), "/" must reach the Lambda default
+  # behavior unchanged -- Next.js's own router handles the root route (e.g. apps/next's
+  # "/" page.tsx). A non-empty default_root_object makes CloudFront rewrite every bare
+  # "/" request to "/index.html" *before* choosing a cache behavior, regardless of which
+  # origin ends up serving it -- there is no such Next.js route, so the Lambda rendered
+  # _not-found for every real "/" request while every other path worked fine
+  # (schoolsmart-terraform-0ov): CloudFront returned 404 for "/" while a direct Function
+  # URL request to the same path correctly rendered/redirected.
+  default_root_object = var.api_gateway_is_default ? "" : "index.html"
 
   origin {
     domain_name              = data.aws_s3_bucket.static_website.bucket_regional_domain_name
