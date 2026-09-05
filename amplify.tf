@@ -7,6 +7,7 @@ locals {
 }
 
 module "amplify" {
+  count  = var.retire_amplify ? 0 : 1
   source = "./modules/amplify"
 
   providers = {
