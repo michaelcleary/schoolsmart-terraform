@@ -5,12 +5,12 @@
 # static-assets bucket (nextjs-assets.tf) is an ordered-behavior origin for the path
 # patterns that are actually static (_next/static/*, public/ files).
 #
-# Uses a temporary validation domain (var.nextjs_domain_name) rather than the real
-# "${amplify_domain_prefix}.${main_domain_name}" domain — Amplify's own CloudFront
-# distribution already claims that domain as an alias, and CloudFront rejects a second
-# distribution claiming an alias another distribution already owns. The real domain
-# cutover (removing Amplify's alias, pointing this distribution's aliases at it instead)
-# is schoolsmart-terraform-yd1, once this has been validated end-to-end in dev.
+# Uses a temporary validation domain (var.nextjs_domain_name) until var.retire_amplify
+# flips for this environment — Amplify's own CloudFront distribution claims the real
+# "${amplify_domain_prefix}.${main_domain_name}" domain as an alias, and CloudFront rejects
+# a second distribution claiming an alias another distribution already owns, so amplify.tf
+# stops creating the Amplify app (freeing the alias) at the same time this switches domains
+# (schoolsmart-terraform-yd1). Roll out dev -> test -> prod, one environment at a time.
 #
 # Gated behind the same flag as module.lambda's nextjs_server_lambda (enable_nextjs_lambda
 # via enable_nextjs_lambda_hosting) — no point standing up a distribution whose only
@@ -26,7 +26,7 @@ module "nextjs_site" {
 
   env                 = var.env
   aws_region          = var.aws_region
-  domain_name         = var.nextjs_domain_name
+  domain_name         = var.retire_amplify ? "${var.amplify_domain_prefix}.${var.main_domain_name}" : var.nextjs_domain_name
   website_bucket_name = local.nextjs_assets_bucket_name
   origin_path         = "/${var.release_tag}"
 

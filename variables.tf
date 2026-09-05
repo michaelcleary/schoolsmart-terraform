@@ -219,6 +219,18 @@ variable "nextjs_domain_name" {
   default     = ""
 }
 
+# schoolsmart-terraform-yd1: retires Amplify for this environment once its OpenNext
+# CloudFront distribution (nextjs-site.tf) has been validated end-to-end on its temporary
+# domain. Flipping this to true stops creating module.amplify (freeing up the
+# "${amplify_domain_prefix}.${main_domain_name}" alias) and repoints nextjs_site's domain_name
+# at that real domain instead of the temporary validation one. Roll out dev -> test -> prod,
+# one environment at a time, not all at once — this is a DNS cutover.
+variable "retire_amplify" {
+  description = "Cut this environment's real Next.js domain over from Amplify to the OpenNext CloudFront distribution, and stop creating the Amplify app."
+  type        = bool
+  default     = false
+}
+
 # Off by default: aws_lambda_function.function fails to create if s3_key doesn't exist
 # yet in lambda_code_bucket, which would otherwise fail *every* apply to this workspace
 # (terraform apply is all-or-nothing) until schoolsmart-admin's OpenNext build is landing

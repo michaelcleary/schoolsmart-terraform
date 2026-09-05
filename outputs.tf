@@ -67,18 +67,18 @@ output "api_gateway_v2_api_id" {
 }
 
 output "amplify_app_id" {
-  value       = module.amplify.app_id
-  description = "Amplify app ID — needed by CI/CD to trigger deployments (aws amplify start-job)"
+  value       = var.retire_amplify ? null : module.amplify[0].app_id
+  description = "Amplify app ID — needed by CI/CD to trigger deployments (aws amplify start-job). Null once retire_amplify retires this env's Amplify app (schoolsmart-terraform-yd1)."
 }
 
 output "amplify_branch_name" {
-  value       = module.amplify.branch_name
-  description = "Amplify branch being deployed"
+  value       = var.retire_amplify ? null : module.amplify[0].branch_name
+  description = "Amplify branch being deployed. Null once retire_amplify retires this env's Amplify app (schoolsmart-terraform-yd1)."
 }
 
 output "amplify_domain" {
-  value       = module.amplify.custom_domain
-  description = "Custom domain for the NextJS app"
+  value       = var.retire_amplify ? null : module.amplify[0].custom_domain
+  description = "Custom domain for the NextJS app. Null once retire_amplify retires this env's Amplify app (schoolsmart-terraform-yd1) — see nextjs_site_domain instead."
 }
 
 output "cognito_user_pool_id" {

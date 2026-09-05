@@ -44,6 +44,11 @@ nextjs_domain_name = "next-dev-app.schoolsmart.co.uk"
 # Flipping this on creates the Lambda server + CloudFront dist.
 enable_nextjs_lambda_hosting = true
 
+# schoolsmart-terraform-yd1: dev's OpenNext CloudFront distribution has been verified
+# end-to-end (schoolsmart-terraform-6rk) — cut dev-app.schoolsmart.co.uk over to it and
+# stop creating dev's Amplify app. test/prod stay on Amplify until validated separately.
+retire_amplify = true
+
 # Shared cross-env buckets (see nextjs-assets.tf) — dev is the "owning" workspace that
 # creates them and writes their CloudFront-read bucket policies; test/prod just read
 # them via a data source.
