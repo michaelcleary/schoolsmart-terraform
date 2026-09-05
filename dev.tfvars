@@ -23,7 +23,7 @@ admin_use_www_subdomain = false
 
 email_override = "it@schoolsmart.co.uk"
 
-release_tag = "f2bb29c8"
+release_tag = "5c436893"
 
 # Amplify / NextJS
 amplify_repository_url           = "https://github.com/michaelcleary/schoolsmart-admin"
